@@ -3,7 +3,7 @@ Communication with QIDI 3D printers
 
 # System requirements:
 a LINUX computer, like an SBC (Raspberry PI, Odroid...) but also any other Linux Destop PC.
-a network connectipn to your QIDI 3D printer
+A network connection to your QIDI 3D printer
 
 # Current functions
 
@@ -13,9 +13,9 @@ Currently implemented functions:
 
 - automatically find the IP address of the QIDI 3D printer. One printer is currently supported, until QIDI sends me a second one for free:-)
 - reading the machine parameters
-- reading the printer status
+- reading the printer stagit push origin mastertus
 - diplaying these information on the screen
-- by pressing the 'f' key a list of files from the SAD card is shown
+- by pressing the 'f' key a list of files from the SD card is shown
 - pressing 'x' exits this program
 - pressing 'u' uploads a dummy file: testfile.gcode to the printer's SSD card
 
@@ -30,6 +30,7 @@ Currently implemented functions:
 # build the software
 
 make clean
+
 make
 
 # run the software
