@@ -19,6 +19,7 @@ Currently implemented functions:
 - diplaying these information on the screen
 - lists files on the SD card
 - file upload to the 3D printer. Filename given as command line argument -u, see below
+- start print job
 
 # future plans
 
@@ -46,3 +47,4 @@ when this software is running, you can enter these command keys (followed by pre
 - 'f' and Enter: a list of files from the SD card is shown
 - 'u' and Enter: uploads a file. Filename given as command line argument "-u filename"
 - 'x' and Enter: exits this program
+- 'p' and Enter: prints the file given by command line argument "-u filename"

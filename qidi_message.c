@@ -56,6 +56,11 @@
 * if all bytes sent, save file: request: M29
 * answer: Done saving file \r\n// filename
 *
+* Start Printing a gcode file
+* ===========================
+* request: M6020 'filename' (quot-mark = 0x27)
+* answer: ok N:0
+*
  */
 
 

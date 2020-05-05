@@ -81,7 +81,7 @@ int opt;
 						break;
             case 'v':   verbose = 1;
                         break;
-			case 'V': 	printf("QIDI Linux Remote Control, V0.11, by Kurt Moraw, DJ0ABR\n");
+			case 'V': 	printf("QIDI Linux Remote Control, V0.2, by Kurt Moraw, DJ0ABR\n");
 						exit(0);
 			default:	break;	
 		}

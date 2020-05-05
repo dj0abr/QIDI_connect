@@ -191,14 +191,37 @@ static int giveup = 0;
                         timeout = 0;
                     }
                     break;
+                    
+        case 6030:  // start printing a file
+                    sendToQidi("M6030 \'%s\'",uploadfilename);
+                    loopstat = 60300;
+                    timeout = 0;
+                    break;
+                    
+        case 60300: // wait for response to M6030
+                    s = readRXbuffer();
+                    if(s)
+                    {
+                        if(strstr(s,"ok N:"))
+                        {
+                            loopstat = 4000;
+                            break;
+                        }
+                    }
+                    if(++timeout >= CMD_TIMEOUT)
+                        loopstat = 6030;    // repeat last command
+                    break;
     }
     
     // check for a user command
     if(command == 'f') // display files on SD card
         loopstat = 20;
     
-    if(command == 'u') // uplod a gcode file
+    if(command == 'u') // upload a gcode file
         loopstat = 28;
+
+    if(command == 'p') // print a gcode file
+        loopstat = 6030;
     
     command = 0;
 }
