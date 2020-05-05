@@ -16,10 +16,11 @@
 
 #include "qidi_connect.h"
                     
-void writeLine(char *line, int ln);
+void writeLine(char *line, int len, int offset);
 
 char command = 0;
 int writestatus = 0;
+char uploadfilename[256];
 
 /*
  * Find QIDI 3D printer in the network:
@@ -68,7 +69,7 @@ int cnt = 0;
             strncpy(qidi_IP,hp,19);
             qidi_IP[19] = 0;
             
-            printf("the 3d printer has the IP: <%s>\n",qidi_IP);
+            printf("3D printer IP: <%s>\n",qidi_IP);
             
             // connect to the printer (and disconnect any previous connection)
             loopstat = 4001;
@@ -214,20 +215,44 @@ static int giveup = 0;
 *
 */
 
+#define CHUNKSIZE   1280    // same size as in qidi software
+     
 int writefile()
 {
 char str[100];
 char *s;
 int timeout = 0;
-static int chunknum = 0;
+struct stat st;
+int perc;
+static int filesize;
+static int offset = 0;
+static char fileline[CHUNKSIZE+1];
+static FILE *fr;
+static int finished = 0;
+static int rlen;
+static int resend = 0;
+static int lastperc = 0;
 
     switch (writestatus)
     {
-        case 0: sprintf(str,"M28 %s","testfile.gcode");   // TODO: enter file name
+        case 0: // open the file to upload
+                fr = fopen(uploadfilename,"r");
+                if(!fr)
+                {
+                    printf("cannot open %s\n",uploadfilename);
+                    return 1;
+                }
+                // get total size of the file
+                if(stat(uploadfilename,&st)==0)
+                    filesize = st.st_size;
+                
+                sprintf(str,"M28 %s",uploadfilename);   // TODO: enter file name
                 printf("send file: %s\n",str);
                 sendToQidi(str);
                 writestatus = 1;
-                chunknum = 0;
+                offset = 0;
+                finished = 0;
+                resend = 0;
                 break;
         case 1: // wait for "ok" confirmation to M28
                 s = readRXbuffer();
@@ -244,15 +269,29 @@ static int chunknum = 0;
                 {
                     // qidi does not respond, give up writing file
                     printf("upload ERROR 1\n");
+                    fclose(fr);
                     return 1;
                 }
                 break;
                 
         case 2:  // send gcode data
-                writeLine("01234567890123456789",chunknum++);
-                //writestatus = 2;
-                // if last data, change to FINISHED
+                if(resend == 0)
+                    rlen = fread(fileline, 1, CHUNKSIZE, fr);
+                else
+                    printf("resend offset: %d\n",offset);
+                
+                writeLine(fileline,rlen,offset);
+                if(rlen != CHUNKSIZE) finished = 1;
+                
                 writestatus = 3;
+                
+                // show bytes left
+                perc = 100-((filesize-offset)*100)/filesize;
+                if(perc/10 != lastperc/10)
+                {
+                    printf("sent: %d %%\n",perc);
+                    lastperc = perc;
+                }
                 break;
                 
         case 3: // wait for confirmation for data chunk
@@ -261,21 +300,34 @@ static int chunknum = 0;
                 {
                     if(strstr(s,"ok"))
                     {
+                        offset += rlen;
                         // confirmed, continue sending the file
-                        writestatus = 4; //2;
-                        sleep(1);
+                        if(finished == 1)
+                            writestatus = 4; //2;
+                        else
+                        {
+                            writestatus = 2;
+                            resend = 0;
+                        }
                         break;
+                    }
+                    else
+                    {
+                        // resend last chunk
+                        resend = 1;
                     }
                 }
                 if(++timeout > CMD_TIMEOUT)
                 {
                     // qidi does not respond, give up writing file
                     printf("upload ERROR 1\n");
+                    fclose(fr);
                     return 1;
                 }
                 break;
                 
-        case 4: sendToQidi("M29");
+        case 4: // save file to SD card
+                sendToQidi("M29");
                 writestatus = 5;
                 break;
                 
@@ -287,14 +339,15 @@ static int chunknum = 0;
                     {
                         // confirmed, file upload OK
                         printf("upload OK\n");
+                        fclose(fr);
                         return 1;
-                        break;
                     }
                 }
                 if(++timeout > CMD_TIMEOUT)
                 {
                     // qidi does not respond, give up writing file
                     printf("upload ERROR 2\n");
+                    fclose(fr);
                     return 1;
                 }
                 break;
@@ -303,19 +356,12 @@ static int chunknum = 0;
 }
 
 // sends one line (chunk) of a gcode file to the 3d printer
-// max line legth: 256 Bytes
-void writeLine(char *line, int ln)
+// max line legth: CHUNKSIZE Bytes
+void writeLine(char *line, int len, int offset)
 {
-unsigned char s[256+6+1];
-int len = strlen(line);
+unsigned char s[CHUNKSIZE+6+1];
 
-    if(len > 256)
-    {
-        printf("line too long\n");
-        return;
-    }
-    
-    printf("write line: %s\n",line);
+    if(verbose) printf("write line: %s\n",line);
     
     /*
      * concat at the end of the line: 4 Bytes...length, 1 byte chksum, 1 byte = 0x83
@@ -323,10 +369,10 @@ int len = strlen(line);
     
     // length
     memcpy(s,line,len);
-    s[len+3] = ln & 0xff;
-    s[len+2] = ln >> 8;
-    s[len+1] = ln >> 16;
-    s[len+0] = ln >> 24;
+    s[len+0] = offset & 0xff;
+    s[len+1] = offset >> 8;
+    s[len+2] = offset >> 16;
+    s[len+3] = offset >> 24;
     
     // calc chksum
     unsigned char chksum = 0;

@@ -58,7 +58,7 @@ struct sockaddr_in sin;
         return 1;
 	}
 	
-	printf("socket bound\n");
+	if(verbose) printf("socket bound\n");
 	
 	getBroadcastIP();
     
@@ -113,7 +113,7 @@ void getBroadcastIP()
             {
                 *hp=0;
                 strcat(broadcastIP,".255");
-                printf("broadcast IP: <%s>\n",broadcastIP);
+                if(verbose) printf("broadcast IP: <%s>\n",broadcastIP);
                 // finished
                 break;
             }
@@ -128,7 +128,7 @@ void sendBroadcast(char *buf, int len)
 {
 struct sockaddr_in sin;
 
-    printf("TX broadcast message no:%d <%s> to IP: %s port: %d\n",txmsgnum,buf,broadcastIP,QIDI_PORT);
+    if(verbose) printf("TX broadcast message no:%d <%s> to IP: %s port: %d\n",txmsgnum,buf,broadcastIP,QIDI_PORT);
 
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(QIDI_PORT);
@@ -166,7 +166,7 @@ int len = strlen(buf);
 
     strcpy(lastTXmessage,buf);
 
-    printf("TX UDP message no:%d <%s> to IP: %s port: %d\n",txmsgnum,buf,qidi_IP,QIDI_PORT);
+    if(verbose) printf("TX UDP message no:%d <%s> to IP: %s port: %d\n",txmsgnum,buf,qidi_IP,QIDI_PORT);
 
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(QIDI_PORT);
@@ -196,7 +196,7 @@ char internalRXbuffer[RXBUFLEN];
 		int rxlen = recvfrom(UDP_sock, internalRXbuffer, RXBUFLEN, 0, (struct sockaddr *)&from_sock, &fromlen);
         internalRXbuffer[rxlen] = 0;
 
-        printf("from QIDI: %s",internalRXbuffer);
+        if(verbose) printf("from QIDI: %s",internalRXbuffer);
         internalRXbuffer[rxlen] = 0;
         writeRXbuffer(internalRXbuffer);
     }

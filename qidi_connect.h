@@ -27,6 +27,7 @@
 #include <pwd.h>
 #include <math.h>
 #include <ifaddrs.h>
+#include <sys/stat.h>
 
 #define RXBUFLEN 1000
 
@@ -70,4 +71,6 @@ extern int nozzlenumber;
 extern int hotbedenabled;
 extern int txconfirmed;
 extern char command;
+extern char uploadfilename[256];
+extern int verbose;
 

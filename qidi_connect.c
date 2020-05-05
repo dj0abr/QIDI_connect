@@ -22,9 +22,71 @@
 void *getkey(void *dummy);
 
 int keeprunning = 1;
+int verbose = 0;
 
-int main()
+// check if qidi_connect is already running
+void isRunning()
 {
+    int num = 0;
+    char s[256];
+    sprintf(s,"ps -e | grep qidi_connect");
+    
+    FILE *fp = popen(s,"r");
+    if(fp)
+    {
+        // gets the output of the system command
+        while (fgets(s, sizeof(s)-1, fp) != NULL) 
+        {
+            if(strstr(s,"qidi_connect") && !strstr(s,"grep"))
+            {
+                if(++num == 2)
+                {
+                    printf("qidi_connect is already running, do not start twice !");
+                    pclose(fp);
+                    exit(0);
+                }
+            }
+        }
+        pclose(fp);
+    }
+}
+
+void INThandler(int sig)
+{
+    printf("\nstopped by Ctrl-C, cleaning system ...");
+    closeUDP();
+    keeprunning = 0;
+    sleep(1);
+	exit(0);
+}
+
+int main(int argc, char *argv[])
+{
+int opt;
+
+    // check if it is already running, if yes then exit
+    isRunning();
+    
+    // this handler captures the Ctrl-C key and closes
+    // all processes before exiting
+    signal(SIGINT, INThandler);
+    
+    // read command line options
+    while((opt = getopt(argc,argv,"Vvu:")) != -1)
+	{
+		switch(opt)
+		{
+			case 'u':	strcpy(uploadfilename,optarg);
+                        printf("Upload file:%s, press 'u' to upload\n",uploadfilename);
+						break;
+            case 'v':   verbose = 1;
+                        break;
+			case 'V': 	printf("QIDI Linux Remote Control, V0.11, by Kurt Moraw, DJ0ABR\n");
+						exit(0);
+			default:	break;	
+		}
+	}
+    
     setvbuf(stdin, 0, _IONBF, 0);   // nonblocking key press read
     
     init_udp();     // init communication UDP sockets
