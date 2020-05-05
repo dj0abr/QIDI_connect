@@ -101,6 +101,7 @@ int loopstat;
 void qidi_loop()
 {
 char *s;
+char str[256];
 int res;
 static int timeout = 0;
 static int giveup = 0;
@@ -193,7 +194,8 @@ static int giveup = 0;
                     break;
                     
         case 6030:  // start printing a file
-                    sendToQidi("M6030 \'%s\'",uploadfilename);
+                    sprintf(str,"M6030 \'%s\'",uploadfilename);
+                    sendToQidi(str);
                     loopstat = 60300;
                     timeout = 0;
                     break;
