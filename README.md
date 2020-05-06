@@ -1,5 +1,5 @@
 # QIDI_connect
-Communication with QIDI 3D printers for Linux
+Webbrowser based Communication with QIDI 3D printers for Linux
 
 Download is MUCH faster and more reliable compared to the original QIDI software
 
@@ -20,10 +20,7 @@ Currently implemented functions:
 - lists files on the SD card
 - file upload to the 3D printer. Filename given as command line argument -u, see below
 - start print job
-
-# future plans
-
-- nice GUI using any Web Browser on any device
+- view status in a bowser
 
 # build the software
 
@@ -31,14 +28,24 @@ make clean
 
 make
 
+copy (as root) the file index.html (from the html subfolder) into the apache html folder. If you don't know where the Apache html folder is located, the first start qidi_connect, it will print this location on the screen.
+
+# prepare the system
+
+if not already done, install the apache web server:
+
+sudo apt-get install apache2
+
 # start the software
 
-./qidi_connect [options]
+sudo ./qidi_connect [options]
+
+(sudo is needed because qidi_connect write a status file "qidi.dat" into the apache html folder)
 
 options:
 -v ... verbose, show a lot of debugging messages
 -V ... version information
--u filename ... filename for a gcode file upload using the 'u' function (see runtime commands)
+-u filename ... filename for a gcode file. For print-start or upload using the 'u' function (see runtime commands)
 
 # runtime commands
 

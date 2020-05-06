@@ -73,4 +73,7 @@ extern int txconfirmed;
 extern char command;
 extern char uploadfilename[256];
 extern int verbose;
+extern int printstat;
+extern int printprogress;
+extern char htmldir[256];
 

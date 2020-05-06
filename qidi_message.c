@@ -32,10 +32,9 @@
         B: hot bed current temperature / target temperature
         E1: thermal Head 1 current temperature / target temperature
         E2: thermal Head 2 current temperature / target temperature
-        X, Y,Z:coordinate position, in mm
+        X,Y,Z:coordinate position, in mm
         F: Extrusion Head 1 fan PWM / extrusion Head 2 fan the maximum value is 256
-        D: SD ocation of card currently Read/ total size of file currently read on SD card / whether pause
-           When the file is not open, the total size is 0, the pause flag is only valid when the file is open, and 1 is paused
+        D: current read position in gcode file / total gcode file size / pause
         T: when the file has started, only the file starts printing is valid
  *
  * Show files on SD card
@@ -46,21 +45,26 @@
         Message: File-0 Name and Size
         Message: File-n Name and Size
         End file list
-*
-* Upload a gcode file (uncompressed)
-* ==================================
-* request: M28 filename
-* answer: ok N:0
-* send: file (or part of file)
-* answer: ok
-* if all bytes sent, save file: request: M29
-* answer: Done saving file \r\n// filename
-*
-* Start Printing a gcode file
-* ===========================
-* request: M6020 'filename' (quot-mark = 0x27)
-* answer: ok N:0
-*
+ *
+ * Upload a gcode file (uncompressed)
+ * ==================================
+ * request: M28 filename
+ * answer: ok N:0
+ * send: file (or part of file)
+ * answer: ok
+ * if all bytes sent, save file: request: M29
+ * answer: Done saving file \r\n// filename
+ *
+ * Start Printing a gcode file
+ * ===========================
+ * request: M6020 'filename' (quot-mark = 0x27)
+ * answer: ok N:0
+ *
+ * Filename of gcode file which is currently printing
+ * ==================================================
+ * request: M4006
+ * answer: ok 'filename'
+ *
  */
 
 
@@ -80,6 +84,8 @@ double posY = 0;
 double posZ = 0;
 int fan1rpm = 0;
 int fan2rpm = 0;
+int printstat = 0;
+int printprogress = 0;
 int machinetype = 0;
 int bedsizeX = 0;
 int bedsizeY = 0;
@@ -124,10 +130,26 @@ int decodeM4000(char *s)
     
     fan1rpm = getElement_int(s,"F:",0);
     if(fan1rpm == -9999) return 0;
+    fan1rpm = (fan1rpm*100)/255;
     
     fan2rpm = getElement_int(s,"F:",1);
     if(fan2rpm == -9999) return 0;
+    fan2rpm = (fan2rpm*100)/255;
         
+    printstat = getElement_int(s,"T:",0);
+    if(printstat == -9999) return 0;
+        
+    int time_done = getElement_int(s,"D:",0);
+    if(printstat == -9999) return 0;
+        
+    int time_total = getElement_int(s,"D:",1);
+    if(printstat == -9999) return 0;
+    
+    if(time_total != 0)
+        printprogress = (time_done * 100)/time_total;
+    else
+        printprogress = 0;
+    
     show_data();
     
     return 1;

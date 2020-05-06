@@ -1,0 +1,243 @@
+<!doctype html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>QIDI Web-Remote-Control</title>
+</head>
+<body>
+
+<style>
+.mainwindow {
+	display: table-row;
+}
+.maincell {
+	border: 1px solid #999999;
+	display: table-cell;
+	padding: 3px 10px;
+	font-size: 20px;
+    font-weight: bold;
+}
+
+.copyright {
+	font-size: 10px;
+}
+
+div.blueTable {
+  border: 1px solid #1C6EA4;
+  background-color: #EEEEEE;
+  text-align: left;
+  border-collapse: collapse;
+}
+.divTable.blueTable .divTableCell, .divTable.blueTable .divTableHead {
+  border: 1px solid #AAAAAA;
+  padding: 4px 15px;
+}
+.divTable.blueTable .divTableBody .divTableCell {
+  font-size: 16px;
+}
+.divTable.blueTable .divTableRow:nth-child(even) {
+  background: #D0E4F5;
+}
+.divTable.blueTable .divTableHeading {
+  background: #1C6EA4;
+  background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  border-bottom: 2px solid #444444;
+}
+.divTable.blueTable .divTableHeading .divTableHead {
+  font-size: 18px;
+  font-weight: bold;
+  color: #FFFFFF;
+  border-left: 2px solid #D0E4F5;
+}
+.divTable.blueTable .divTableHeading .divTableHead:first-child {
+  border-left: none;
+}
+
+.blueTable .tableFootStyle {
+  font-size: 14px;
+}
+.blueTable .tableFootStyle .links {
+	 text-align: right;
+}
+.blueTable .tableFootStyle .links a{
+  display: inline-block;
+  background: #1C6EA4;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+.blueTable.outerTableFooter {
+  border-top: none;
+}
+.blueTable.outerTableFooter .tableFootStyle {
+  padding: 3px 5px; 
+}
+/* DivTable.com */
+.divTable{ display: table; }
+.divTableRow { display: table-row; }
+.divTableHeading { display: table-header-group;}
+.divTableCell, .divTableHead { display: table-cell;}
+.divTableHeading { display: table-header-group;}
+.divTableFoot { display: table-footer-group;}
+.divTableBody { display: table-row-group;}
+</style>
+
+<script>
+
+var myrand = Math.random(); // required to cheat the browser cache
+window.onload = start;
+
+var xmlHttpObject = new XMLHttpRequest();
+
+function start()
+{
+    myOnloadFunction();
+    setInterval(myOnloadFunction, 2000);
+}
+
+function myOnloadFunction()
+{
+    // request to read a file on the server
+    xmlHttpObject.open('get',"qidi.dat?cb=` + myrand");
+    xmlHttpObject.onreadystatechange = handleContent;
+    xmlHttpObject.send(null);
+    return false;
+}
+
+function handleContent()
+{
+    if (xmlHttpObject.readyState == 4)
+    {
+        // File contents received, split into lines
+        var lines = xmlHttpObject.responseText.split('\n');
+        // and fill into the GUI
+        fillData(lines);
+    }
+}
+
+function fillData(lines)
+{
+    // machine parameters
+    document.getElementById("value1").innerHTML = lines[0];
+    document.getElementById("value2").innerHTML = lines[1];
+    document.getElementById("value3").innerHTML = lines[2];
+    document.getElementById("value4").innerHTML = lines[3];
+    document.getElementById("value5").innerHTML = lines[4];
+    document.getElementById("value6").innerHTML = lines[5];
+    
+    // actual status
+    document.getElementById("value7").innerHTML = lines[6] + " -> " + lines[7];
+    document.getElementById("value8").innerHTML = lines[8] + " -> " + lines[9];
+    document.getElementById("value9").innerHTML = lines[12];
+    document.getElementById("value10").innerHTML = lines[13];
+    document.getElementById("value11").innerHTML = lines[14];
+    document.getElementById("value12").innerHTML = lines[15];
+    document.getElementById("value13").innerHTML = lines[17];
+    document.getElementById("value14").innerHTML = lines[18];
+}
+
+</script>
+
+<div class="mainwindow">
+    <div class="maincell" id="maincell1">
+        QIDI X-MAX Live Cam
+        <br>
+        <img src="http://wx.spdns.de:8086/?action=stream" />
+    </div>
+    <div class="maincell" id="maincell2">
+            <br>
+
+        <div class="divTable blueTable">
+            <div class="divTableHeading">
+                <div class="divTableRow">
+                    <div class="divTableHead">Parameter</div>
+                    <div class="divTableHead">Value</div>
+                    <div class="divTableHead">Unit</div>
+                </div>
+            </div>
+
+            <div class="divTableBody">
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param1">Machine Type</div>
+                    <div class="divTableCell" id="value1"></div>
+                    <div class="divTableCell" id="unit1"></div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param2">Bed Size X</div>
+                    <div class="divTableCell" id="value2"></div>
+                    <div class="divTableCell" id="unit2">mm</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param3">Bed Size Y</div>
+                    <div class="divTableCell" id="value3"></div>
+                    <div class="divTableCell" id="unit3">mm</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param4">size Z</div>
+                    <div class="divTableCell" id="value4"></div>
+                    <div class="divTableCell" id="unit4">mm</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param5">No. of Nozzles</div>
+                    <div class="divTableCell" id="value5"></div>
+                    <div class="divTableCell" id="unit5"></div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param6">Hot Bed Enable</div>
+                    <div class="divTableCell" id="value6"></div>
+                    <div class="divTableCell" id="unit6"></div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param7">Bed Temperature</div>
+                    <div class="divTableCell" id="value7"></div>
+                    <div class="divTableCell" id="unit7">degC</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param8">Head-1 Temperature</div>
+                    <div class="divTableCell" id="value8"></div>
+                    <div class="divTableCell" id="unit8">degC</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param9">act. Pos X</div>
+                    <div class="divTableCell" id="value9"></div>
+                    <div class="divTableCell" id="unit9">mm</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param10">act. Pos Y</div>
+                    <div class="divTableCell" id="value10"></div>
+                    <div class="divTableCell" id="unit10">mm</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param11">act. Pos Z</div>
+                    <div class="divTableCell" id="value11"></div>
+                    <div class="divTableCell" id="unit11">mm</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param12">Fan-1 Speed</div>
+                    <div class="divTableCell" id="value12"></div>
+                    <div class="divTableCell" id="unit12">%</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param13">Print Time</div>
+                    <div class="divTableCell" id="value13"></div>
+                    <div class="divTableCell" id="unit13">min</div>
+                </div>
+                <div class="divTableRow">
+                    <div class="divTableCell" id="param14">Print Progress</div>
+                    <div class="divTableCell" id="value14"></div>
+                    <div class="divTableCell" id="unit14">%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="copyright">
+by DJ0ABR
+</div>
+</body>
+</html>
+

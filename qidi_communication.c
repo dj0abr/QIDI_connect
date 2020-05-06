@@ -79,9 +79,9 @@ int cnt = 0;
         
         sleep(1);
         
-        if(++cnt >= 10)
+        if(++cnt >= 2)
         {
-            printf("no QIDI 3D printer found within 10 seconds ... giving up\n");
+            printf("no QIDI 3D printer found within 2 seconds ... try again\n");
             return 0;
         }
     }
@@ -101,7 +101,7 @@ int loopstat;
 void qidi_loop()
 {
 char *s;
-char str[256];
+char str[1000];
 int res;
 static int timeout = 0;
 static int giveup = 0;
@@ -244,7 +244,7 @@ static int giveup = 0;
      
 int writefile()
 {
-char str[100];
+char str[1000];
 char *s;
 int timeout = 0;
 struct stat st;

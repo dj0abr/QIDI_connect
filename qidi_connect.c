@@ -14,6 +14,7 @@
  * using information from:
  * https://github.com/3daddict/QIDI-X-ONE
  * https://github.com/yandreev3/3dWiFiSend
+ * https://github.com/Photonsters/anycubic-photon-docs/blob/master/photon-blueprints/ChituClientWifiProtocol-translated.txt
  * 
  */
 
@@ -23,6 +24,75 @@ void *getkey(void *dummy);
 
 int keeprunning = 1;
 int verbose = 0;
+
+char htmldir[256] = { "." };
+
+// cleans white spaces from beginning, middle and end of a string
+char *cleanPfadString(char *str, int cleanspace)
+{
+static char hs[256];
+char *hp = str;
+int idx = 0;
+
+    while(*hp == ' ' || *hp == ',' || *hp == '\n' || *hp == '\r' || *hp == '\'' || *hp == '\"') hp++;
+    while(*hp) hs[idx++] = *hp++;
+    hp = hs+idx-1;
+    while(*hp == ' ' || *hp == ',' || *hp == '\n' || *hp == '\r' || *hp == '\'' || *hp == '\"') *hp-- = 0;
+    hs[idx] = 0;
+    return hs;
+}
+
+int searchHTMLpath()
+{
+int ret=0;
+char *sret;
+
+    if(htmldir[0] == '.')
+    {
+        // search for the apache working directory
+        printf("search Apache HTML path\n");
+        printf("search /srv for htdocs\n");
+        ret = system("find  /srv -xdev -name htdocs  -print > pfad 2>/dev/null");
+        printf("search /var for htdocs\n");
+        ret = system("find  /var -xdev -name htdocs  -print >> pfad 2>/dev/null");
+        printf("search /var for html\n");
+        ret = system("find  /var -xdev -name html  -print >> pfad 2>/dev/null");
+        printf("search /usr for htdocs\n");
+        ret = system("find  /usr -xdev -name htdocs  -print >> pfad 2>/dev/null");
+        // if the directory was found its name is in file: "pfad"
+        FILE *fp=fopen("./pfad","r");
+        if(fp)
+        {
+            char p[256];
+            sret = fgets(p,255,fp);
+            if(sret == NULL)
+            {
+                printf("Path to apache webserver files not found: 3\n");
+                exit(0);
+            }
+            char *cp= cleanPfadString(p,0);
+            if(strlen(cp)>3)
+            {
+                strcpy(htmldir,cp);
+                printf("Webserver Path: %s\n",htmldir);
+            }
+            else
+            {
+                printf("Path to apache webserver files not found: 2\n");
+                exit(0);
+            }
+            
+            fclose(fp);
+        }
+        else
+        {
+            printf("Path to apache webserver files not found: 1\n");
+            exit(0);
+        }
+    }
+    return ret;
+}
+
 
 // check if qidi_connect is already running
 void isRunning()
@@ -88,13 +158,19 @@ int opt;
 	}
     
     setvbuf(stdin, 0, _IONBF, 0);   // nonblocking key press read
-    
+
+    searchHTMLpath();// search Apache HTML folder
     init_udp();     // init communication UDP sockets
-    searchQidiIP(); // search for a QIDI 3d printer
     
     // start keyboard thread
     pthread_t keyThread;
 	pthread_create(&keyThread, NULL, getkey, NULL);
+    
+    while(keeprunning)
+    {
+        int r = searchQidiIP(); // search for a QIDI 3d printer
+        if(r) break;
+    }
     
     while(keeprunning)
     {
@@ -117,7 +193,10 @@ void *getkey(void *dummy)
         if(c >='a' && c <= 'z')
         {
             if(c == 'x')
+            {
+                printf("stopping program ... \n");
                 keeprunning = 0;
+            }
             
             command = c;
         }
