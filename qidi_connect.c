@@ -174,6 +174,9 @@ int opt;
     pthread_t keyThread;
 	pthread_create(&keyThread, NULL, getkey, NULL);
     
+    // start local UDP connection to php
+    startUDP();
+    
     while(keeprunning)
     {
         int r = searchQidiIP(); // search for a QIDI 3d printer

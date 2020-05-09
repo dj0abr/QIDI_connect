@@ -21,6 +21,7 @@ void writeLine(char *line, int len, int offset);
 char command = 0;
 int writestatus = 0;
 char uploadfilename[256];
+char printfile[256] = {0};
 
 /*
  * Find QIDI 3D printer in the network:
@@ -194,7 +195,7 @@ static int giveup = 0;
                     break;
                     
         case 6030:  // start printing a file
-                    sprintf(str,"M6030 \'%s\'",uploadfilename);
+                    sprintf(str,"M6030 \'%s\'",printfile);
                     sendToQidi(str);
                     loopstat = 60300;
                     timeout = 0;
@@ -216,16 +217,21 @@ static int giveup = 0;
     }
     
     // check for a user command
-    if(command == 'f') // display files on SD card
-        loopstat = 20;
-    
     if(command == 'u') // upload a gcode file
         loopstat = 28;
 
-    if(command == 'p') // print a gcode file
-        loopstat = 6030;
-    
     command = 0;
+    
+    // check for a WEB command, which is a file in the html folder
+    
+    // check for a filename to be printed, received from php via udp
+    if(*printfile)
+    {
+        printf("PRINT: %s\n",printfile);
+        // loopstat = 6030; // activate for start printing
+        
+        *printfile = 0;
+    }
 }
 
 /*
@@ -408,4 +414,63 @@ unsigned char s[CHUNKSIZE+6+1];
     s[len+5] = 0x83;
         
     sendToQidi_binary(s, len+6);
+}
+
+// ===== UDP Receiver =====
+// process to receive local UDP messages from the webserver (php)
+
+void *getudp(void *dummy);
+int pipe_sock;
+char udpdata[256];
+
+void startUDP()
+{
+    pipe_sock = socket(PF_INET, SOCK_DGRAM, 0);
+    if (pipe_sock == -1)
+    {
+        printf("Failed to create socket,errno=%d\n", errno);
+        return;
+    }
+
+    struct sockaddr_in sinc4fm;
+    memset(&sinc4fm, 0, sizeof(struct sockaddr_in));
+    sinc4fm.sin_family = AF_INET;
+    sinc4fm.sin_port = htons(8899);
+    sinc4fm.sin_addr.s_addr = INADDR_ANY;	// nur intern
+
+    if (bind(pipe_sock, (struct sockaddr *)&sinc4fm, sizeof(struct sockaddr_in)) != 0)
+    {
+        printf("Failed to bind PIPE socket, errno=%d\n", errno);
+        close(pipe_sock);
+        return;
+    }
+    
+    // start the receiver process
+    pthread_t udpThread;
+	pthread_create(&udpThread, NULL, getudp, NULL);
+}
+
+void *getudp(void *dummy)
+{
+socklen_t fromlen;
+    
+    pthread_detach(pthread_self());
+
+   	while (keeprunning)
+	{
+        fromlen = sizeof(struct sockaddr_in);
+        struct sockaddr_in frm_dmr;
+        int len = recvfrom(pipe_sock, udpdata, 256, 0, (struct sockaddr *)&frm_dmr, &fromlen);
+        udpdata[len] = 0;
+        //printf("read %d bytes from sock: %d. Message:%s\n", len, 8899,udpdata);
+        
+        // prepare filename for 3d printing
+        char *hp = strchr(udpdata,'|');
+        if(hp)
+        {
+            strcpy(printfile,hp+1);
+        }
+    }
+    
+    pthread_exit(NULL); // self terminate this thread
 }

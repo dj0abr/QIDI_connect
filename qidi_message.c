@@ -192,7 +192,7 @@ int SDidx = 0;
        
 int decodeM20(char *s)
 {
-char sdfiles_file[256];
+char sdfiles_file[1000];
 
     if(strstr(s,"Begin file list")) 
     {

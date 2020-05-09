@@ -35,22 +35,36 @@
         $prfile = $_POST['SDfiles'];
         if(strlen($prfile) < 1)
         {
-            $infotext = "OK: PRINT command received<br><br>";
-            $infotext = $infotext."SELECT the file to print<br>";
+            $infotext = $infotext."ERROR: Please SELECT the file to be printed in the list box<br>";
         }
         else
         {
-            $infotext = "OK: PRINT command received<br><br>";
-            $infotext = $infotext."File to Print:".$prfile."<br>";
+            $infotext = "Start printig file :".$prfile."<br>";
+            sendToqidi_connect($prfile);
         }
         
         $myrnd = mt_rand();
-        header( "refresh:2;url=index.html?reload=".$myrnd);
+        header( "refresh:4;url=index.html?reload=".$myrnd);
         echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
     }
     
     function uploadFile()
     {
+    }
+    
+    // send a message to the qidi_connect c-program
+    function sendToqidi_connect($msg)
+    {
+        if(!($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
+        {
+            echo("SOCKET ERROR ");
+        }
+        else
+        {
+            $ret = socket_sendto($sock, $msg, strlen($msg), 0, '127.0.0.1', 8899);
+            echo $ret;
+            socket_close($sock);
+        }
     }
     
 ?>

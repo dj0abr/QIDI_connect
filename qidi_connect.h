@@ -46,6 +46,7 @@ int decodeM4001(char *s);
 int decodeM4000(char *s);
 void show_data();
 int decodeM20(char *s);
+void startUDP();
 
 extern char broadcastIP[20];
 extern int keeprunning;
