@@ -75,6 +75,14 @@ char *sret;
             {
                 strcpy(htmldir,cp);
                 printf("Webserver Path: %s\n",htmldir);
+                // copy html folder to Apache html path
+                char s[300];
+                sprintf(s,"cp html/* %s",htmldir);
+                int r = system(s);
+                if(r == -1)
+                {
+                    printf("copying of HTML files failed\n");
+                }
             }
             else
             {
@@ -192,13 +200,13 @@ void *getkey(void *dummy)
         char c=getc(stdin);
         if(c >='a' && c <= 'z')
         {
+            command = c;
+            
             if(c == 'x')
             {
                 printf("stopping program ... \n");
                 keeprunning = 0;
             }
-            
-            command = c;
         }
     }
     

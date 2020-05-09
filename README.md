@@ -22,6 +22,10 @@ Currently implemented functions:
 - start print job
 - view status in a bowser
 
+# currenty under development
+
+- uploading and starting a print job
+
 # build the software
 
 make clean

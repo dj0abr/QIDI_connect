@@ -184,11 +184,16 @@ int decodeM4001(char *s)
     return 1;
 }
 
-char SDfiles[1000][256];
+#define MAXFILES 250
+#define FILENAMELEN 300
+
+char SDfiles[MAXFILES][FILENAMELEN];
 int SDidx = 0;
        
 int decodeM20(char *s)
 {
+char sdfiles_file[256];
+
     if(strstr(s,"Begin file list")) 
     {
         SDidx=0;
@@ -201,6 +206,19 @@ int decodeM20(char *s)
         for(int i=0; i<SDidx; i++)
             printf(" ===> %s\n",SDfiles[i]);
         printf("========================\n");
+        
+        // and write into file
+        sprintf(sdfiles_file,"%s/qidi_sdfiles.dat",htmldir);
+        FILE *fw = fopen(sdfiles_file,"w");
+        if(fw)
+        {
+            for(int i=0; i<SDidx; i++)
+                fprintf(fw,"%s\n",SDfiles[i]);
+            fclose(fw);
+        }
+        else
+            printf("cannot open %s\n",sdfiles_file);
+        
         return 2;
     }
     
@@ -215,7 +233,7 @@ int decodeM20(char *s)
     
     if(spc == 1)
     {
-        if(s[0] != '.') // ignore trash entry
+        if(s[0] != '.' && SDidx < MAXFILES) // ignore trash entry
             strcpy(SDfiles[SDidx++],s);
     }
     else

@@ -137,7 +137,7 @@ static int giveup = 0;
                         res = decodeM4001(s);
                         if(res) 
                         {
-                            loopstat = 4000;
+                            loopstat = 20; // continue reading files on SD card
                             break;
                         }
                     }
