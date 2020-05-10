@@ -140,7 +140,9 @@ div.blueTable {
 var myrand = Math.random(); // required to cheat the browser cache
 window.onload = start;
 
-var xmlHttpObject = new XMLHttpRequest();
+var stat_xmlHttpObject = new XMLHttpRequest();
+var sd_xmlHttpObject = new XMLHttpRequest();
+var ul_xmlHttpObject = new XMLHttpRequest();
 
 function start()
 {
@@ -153,18 +155,18 @@ function start()
 function myOnloadFunction()
 {
     // request to read a file on the server
-    xmlHttpObject.open('get',"qidi.dat?cb=` + myrand");
-    xmlHttpObject.onreadystatechange = handleContent;
-    xmlHttpObject.send(null);
+    stat_xmlHttpObject.open('get',"qidi.dat?cb=` + myrand");
+    stat_xmlHttpObject.onreadystatechange = handleContent;
+    stat_xmlHttpObject.send(null);
     return false;
 }
 
 function handleContent()
 {
-    if (xmlHttpObject.readyState == 4)
+    if (stat_xmlHttpObject.readyState == 4)
     {
         // File contents received, split into lines
-        var lines = xmlHttpObject.responseText.split('\n');
+        var lines = stat_xmlHttpObject.responseText.split('\n');
         // and fill into the GUI
         fillData(lines);
     }
@@ -173,18 +175,18 @@ function handleContent()
 function loadSDfiles()
 {
     // request to read a file on the server
-    xmlHttpObject.open('get',"qidi_sdfiles.dat?cb=` + myrand");
-    xmlHttpObject.onreadystatechange = handleSDContent;
-    xmlHttpObject.send(null);
+    sd_xmlHttpObject.open('get',"qidi_sdfiles.dat?cb=` + myrand");
+    sd_xmlHttpObject.onreadystatechange = handleSDContent;
+    sd_xmlHttpObject.send(null);
     return false;
 }
 
 function handleSDContent()
 {
-    if (xmlHttpObject.readyState == 4)
+    if (sd_xmlHttpObject.readyState == 4)
     {
         // File contents received, split into lines
-        var lines = xmlHttpObject.responseText.split('\n');
+        var lines = sd_xmlHttpObject.responseText.split('\n');
         // and fill into the GUI
         fillSDfiles(lines);
     }
@@ -193,9 +195,9 @@ function handleSDContent()
 function loadUploadStatus()
 {
     // request to read a file on the server
-    xmlHttpObject.open('get',"qidi_uploadstatus.dat?cb=` + myrand");
-    xmlHttpObject.onreadystatechange = handleULContent;
-    xmlHttpObject.send(null);
+    ul_xmlHttpObject.open('get',"qidi_uploadstatus.dat?cb=` + myrand");
+    ul_xmlHttpObject.onreadystatechange = handleULContent;
+    ul_xmlHttpObject.send(null);
     return false;
 }
 
@@ -204,10 +206,10 @@ var oldulstatus = 0;
 
 function handleULContent()
 {
-    if (xmlHttpObject.readyState == 4)
+    if (ul_xmlHttpObject.readyState == 4)
     {
         // File contents received, split into lines
-        var lines = xmlHttpObject.responseText.split('\n');
+        var lines = ul_xmlHttpObject.responseText.split('\n');
         
         var perc = parseInt(lines[0]);      // the first line contains the upload percentage
         var offset = parseInt(lines[1]);    // offset currently uploading
