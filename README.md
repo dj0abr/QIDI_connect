@@ -35,6 +35,15 @@ if not already done, install the apache web server and php
 
 sudo apt-get install apache2 php
 
+! create a new folder "phpdir" in the apache html folder. In ubuntu the apache HTML folder is located in /var/www/html.
+
+cd /var/www/html
+
+sudo mkdir phpdir
+
+chmod 755 phpdir
+
+
 # prepare php for uploading big files
 
 as root open the php.ini file. It is located in /etc/php/..../php.ini  (.... depends on the version number)
