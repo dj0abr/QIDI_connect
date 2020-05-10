@@ -140,107 +140,102 @@ div.blueTable {
 var myrand = Math.random(); // required to cheat the browser cache
 window.onload = start;
 
-var stat_xmlHttpObject = new XMLHttpRequest();
-var sd_xmlHttpObject = new XMLHttpRequest();
-var ul_xmlHttpObject = new XMLHttpRequest();
+var xmlHttpObject = new XMLHttpRequest();
+var last_SDfileUpdate = -1;
 
 function start()
 {
-    myOnloadFunction();
-    setInterval(myOnloadFunction, 2000);
-    setInterval(loadUploadStatus, 1000);
-    loadSDfiles();
+    setInterval(readStatusFile, 1000);
 }
 
-function myOnloadFunction()
+function readStatusFile()
 {
     // request to read a file on the server
-    stat_xmlHttpObject.open('get',"qidi.dat?cb=` + myrand");
-    stat_xmlHttpObject.onreadystatechange = handleContent;
-    stat_xmlHttpObject.send(null);
+    xmlHttpObject.open('get',"phpdir/cgui.dat?cb=` + myrand");
+    xmlHttpObject.onreadystatechange = getContent;
+    xmlHttpObject.send(null);
     return false;
 }
 
-function handleContent()
+function getContent()
 {
-    if (stat_xmlHttpObject.readyState == 4)
+    if (xmlHttpObject.readyState == 4)
     {
         // File contents received, split into lines
-        var lines = stat_xmlHttpObject.responseText.split('\n');
-        // and fill into the GUI
+        var lines = xmlHttpObject.responseText.split('\n');
+        
+        // check if the sd card file list was updated
+        if(lines[22] != last_SDfileUpdate)
+        {
+            fillSDfiles(lines.slice(24));
+            last_SDfileUpdate = lines[22];
+        }
+        
+        // handle upload status
+        handleULContent(lines.slice(19));
+        
+        // read machine information and status
         fillData(lines);
     }
-}
-
-function loadSDfiles()
-{
-    // request to read a file on the server
-    sd_xmlHttpObject.open('get',"qidi_sdfiles.dat?cb=` + myrand");
-    sd_xmlHttpObject.onreadystatechange = handleSDContent;
-    sd_xmlHttpObject.send(null);
-    return false;
-}
-
-function handleSDContent()
-{
-    if (sd_xmlHttpObject.readyState == 4)
-    {
-        // File contents received, split into lines
-        var lines = sd_xmlHttpObject.responseText.split('\n');
-        // and fill into the GUI
-        fillSDfiles(lines);
-    }
-}
-
-function loadUploadStatus()
-{
-    // request to read a file on the server
-    ul_xmlHttpObject.open('get',"qidi_uploadstatus.dat?cb=` + myrand");
-    ul_xmlHttpObject.onreadystatechange = handleULContent;
-    ul_xmlHttpObject.send(null);
-    return false;
 }
 
 var ulstatus = 0;
 var oldulstatus = 0;
 
-function handleULContent()
+function handleULContent(lines)
 {
-    if (ul_xmlHttpObject.readyState == 4)
+    var perc = parseInt(lines[0]);      // the first line contains the upload percentage
+    var offset = parseInt(lines[1]);    // offset currently uploading
+    var filesize = parseInt(lines[2]);  // total size of file
+    
+    var but1 = document.getElementById("printbutton");
+    var but2 = document.getElementById("uploadbutton");
+    var but3 = document.getElementById("fileselector");
+    var but4 = document.getElementById("delbutton");
+
+    // show / hide the progress bar
+    var pdiv = document.getElementById("ulprogress");
+    if(perc < 0)
     {
-        // File contents received, split into lines
-        var lines = ul_xmlHttpObject.responseText.split('\n');
-        
-        var perc = parseInt(lines[0]);      // the first line contains the upload percentage
-        var offset = parseInt(lines[1]);    // offset currently uploading
-        var filesize = parseInt(lines[2]);  // total size of file
-        
-        // show / hide the progress bar
-        var pdiv = document.getElementById("ulprogress");
-        if(perc < 0)
+        if(perc == -1)
         {
             pdiv.style.display = "none";
-            ulstatus = 0;
         }
         else
         {
-            pdiv.style.display = "block";
-            ulstatus = 1;
+            // upload failed
+            // set progress bar value
+            document.getElementById("ulstatus").value = 0;
+            document.getElementById("ullabel").innerText = "ERROR: upload failed";
         }
-        
-        if(oldulstatus == 1 && ulstatus == 0)
-        {
-            // Download just finished
-            loadSDfiles();
-        }
-        oldulstatus = ulstatus;
-        
-        // set progress bar value
-        var p = document.getElementById("ulstatus").value = perc;
-        
-        var lab = document.getElementById("ullabel");
-        lab.innerText = perc + "% (" + offset/1000 + "kB of " + filesize/1000 + "kB)";
+        ulstatus = 0;
     }
+    else
+    {
+        pdiv.style.display = "block";
+        ulstatus = 1;
+        // set progress bar value
+        document.getElementById("ulstatus").value = perc;
+        document.getElementById("ullabel").innerText = perc + "% (" + offset/1000 + "kB of " + filesize/1000 + "kB)";
+    }
+
+    if(oldulstatus == 0 && ulstatus == 1)
+    {
+        // Download begins
+        but1.disabled = true;
+        but2.disabled = true;
+        but3.disabled = true;
+        but4.disabled = true;
+    }
+    if((oldulstatus == 1 && ulstatus == 0)|| perc>=99)
+    {
+        // Download just finished
+        but1.disabled = false;
+        but2.disabled = false;
+        but3.disabled = false;
+        but4.disabled = false;
+    }
+    oldulstatus = ulstatus;
 }
 
 function fillData(lines)
@@ -269,6 +264,10 @@ function fillSDfiles(lines)
     var SDfiles_element = document.getElementById("SDfiles");
     var index = 0;
     
+    // remove existing optio in select
+    for(var i = (SDfiles_element.options.length - 1); i >= 0; i--)
+        SDfiles_element.remove(i);
+    
     for(var i=0; i<lines.length; i++)
     {
         var lastspc = lines[i].lastIndexOf(" ");
@@ -286,7 +285,7 @@ function fillSDfiles(lines)
         }
     }
     
-    document.getElementById("SDfiles").selectedIndex = "2";
+    //document.getElementById("SDfiles").selectedIndex = "2";
 }
 
 </script>
@@ -391,14 +390,15 @@ function fillSDfiles(lines)
           <div class="select">
             <select id="SDfiles" name ="SDfiles" size="10"></select>
           </div>
-          <input type="submit" name="print" class="myButton" value="3D-PRINT selected SD-card file">
+          <input type="submit" id="printbutton" name="print" class="myButton" value="3D-PRINT selected SD-card file">
+          <input type="submit" id="delbutton" name="delete" class="myButton" value="DELETE selected SD-card file">
         </div>
         <div class="maincell1" id="maincell2a">
             <p style="font-size:20px;font-weight:bold;">Operation</p>
             <label for="password">Password:</label>
             <input type="text" name="password" id="password" value=""><br><br><br>
-            <input type="file" name="fileToUpload" id="fileToUpload" class="myButton"><br>
-            <input type="submit" name="upload" class="myButton" value="UPLOAD"><br><br>
+            <input type="file" id="fileselector" name="fileToUpload" id="fileToUpload" class="myButton"><br>
+            <input type="submit" id="uploadbutton" name="upload" class="myButton" value="UPLOAD"><br><br>
         </div>
     </div>
     </form>

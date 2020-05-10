@@ -194,6 +194,38 @@ static int giveup = 0;
                         // disable percentage file
                         showperc(-1,0,1);
                     }
+                    
+                    if(writefile() == 2)
+                    {
+                        // upload ERROR, file was not fully uploaded to the 3d printer
+                        loopstat = 20;  // re-read file list on SD card
+                        timeout = 0;
+                        // disable percentage file
+                        showperc(-2,0,1);
+                    }
+                    break;
+                    
+        case 30:     // delete file from SD card
+                    sprintf(str,"M30 %s",printfile);
+                    sendToQidi(str);
+                    loopstat = 300;
+                    timeout = 0;
+                    break;
+                    
+        case 300:   // wait for delete confirmation
+                    s = readRXbuffer();
+                    if(s)
+                    {
+                        if(strstr(s,"ok N:"))
+                        {
+                            loopstat = 20;  // re-read file list on SD card
+                            delete_finished++;
+                            writeGUI();
+                            break;
+                        }
+                    }
+                    if(++timeout >= CMD_TIMEOUT)
+                        loopstat = 30;    // repeat last command
                     break;
                     
         case 6030:  // start printing a file
@@ -226,15 +258,25 @@ static int giveup = 0;
         char *hp = strchr(webfile,'|');
         if(hp)
         {
-            // start 3d printing
-            strcpy(printfile,hp+1);
-            printf("PRINT: %s\n",printfile);
-            // loopstat = 6030; // activate for start printing
+            if(*webfile == 'd')
+            {
+                // delete file
+                strcpy(printfile,hp+1);
+                printf("DELETE: %s\n",printfile);
+                loopstat = 30; // activate for start deleting
+            }
+            else
+            {
+                // start 3d printing
+                strcpy(printfile,hp+1);
+                printf("PRINT: %s\n",printfile);
+                loopstat = 6030; // activate for start printing
+            }
         }
         else
         {
             // file upload
-            // !!! to allow upload of big file !!!
+            // !!! to allow upload of big files !!!
             // modify /etc/php.../php.ini, value: upload_max_filesize
             // and also: post_max_site (a bit more than upload_max_filesize
             // and also: memory_limit (even a bit more)
@@ -286,7 +328,7 @@ static int lastperc = -1;
                 if(!fr)
                 {
                     printf("cannot open %s\n",uploadfilename);
-                    return 1;
+                    return 2;
                 }
                 // get total size of the file
                 if(stat(str,&st)==0)
@@ -295,7 +337,7 @@ static int lastperc = -1;
                 if(filesize < 2)
                 {
                     printf("file too small\n");
-                    return 1;
+                    return 2;
                 }
                 
                 sprintf(str,"M28 %s",uploadfilename);   // TODO: enter file name
@@ -326,7 +368,7 @@ static int lastperc = -1;
                     // qidi does not respond, give up writing file
                     printf("upload ERROR timeout in 1\n");
                     fclose(fr);
-                    return 1;
+                    return 2;
                 }
                 break;
                 
@@ -337,9 +379,11 @@ static int lastperc = -1;
                     printf("resend offset: %d\n",offset);
                 
                 writeLine(fileline,rlen,offset);
+                //usleep(1); // helps
                 if(rlen != CHUNKSIZE) finished = 1;
-                timeout = 0;
+                else finished = 0;
                 
+                timeout = 0;
                 writestatus = 3;
                 
                 // show bytes left
@@ -360,6 +404,7 @@ static int lastperc = -1;
                 s = readRXbuffer();
                 if(s)
                 {
+                    timeout = 0;
                     if(strstr(s,"ok"))
                     {
                         offset += rlen;
@@ -383,7 +428,7 @@ static int lastperc = -1;
                     // qidi does not respond, give up writing file
                     printf("upload ERROR 1\n");
                     fclose(fr);
-                    return 1;
+                    return 2;
                 }
                 break;
                 
@@ -409,7 +454,7 @@ static int lastperc = -1;
                     // qidi does not respond, give up writing file
                     printf("upload ERROR 2\n");
                     fclose(fr);
-                    return 1;
+                    return 2;
                 }
                 break;
     }

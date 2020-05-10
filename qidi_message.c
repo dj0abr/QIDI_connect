@@ -93,6 +93,9 @@ int machinesizeZ = 0;
 int nozzlenumber = 0;
 int hotbedenabled = 0;
 
+int SDfileUpdate = 0;
+int delete_finished = 0;
+
 int decodeM4000(char *s)
 {
     if(s[0] == 'e')
@@ -151,6 +154,7 @@ int decodeM4000(char *s)
         printprogress = 0;
     
     show_data();
+    writeGUI();
     
     return 1;
 }
@@ -192,8 +196,6 @@ int SDidx = 0;
        
 int decodeM20(char *s)
 {
-char sdfiles_file[1000];
-
     if(strstr(s,"Begin file list")) 
     {
         SDidx=0;
@@ -208,17 +210,8 @@ char sdfiles_file[1000];
         printf("========================\n");
         
         // and write into file
-        sprintf(sdfiles_file,"%s/qidi_sdfiles.dat",htmldir);
-        FILE *fw = fopen(sdfiles_file,"w");
-        if(fw)
-        {
-            for(int i=0; i<SDidx; i++)
-                fprintf(fw,"%s\n",SDfiles[i]);
-            fclose(fw);
-        }
-        else
-            printf("cannot open %s\n",sdfiles_file);
-        
+        SDfileUpdate++;
+        writeGUI();
         return 2;
     }
     
@@ -328,22 +321,81 @@ double getElement_float(char *s, char *elem, int elemnum)
     return atof(sres);
 }
 
+// upload status variables
+int perc;
+int offset;
+int filesize;
+
 // write upload status into a file for the webpage
-void showperc(int perc, int offset, int filesize)
+void showperc(int p, int o, int f)
 {
-char s[256];
+    perc = p;
+    offset = o;
+    filesize = f;
+    
+    writeGUI();
+}
 
-    sprintf(s,"%s/qidi_uploadstatus.dat",htmldir);
+/* ==== Communication C-Program -> GUI =====
+* this C-program write the information into a file  html/phpdir/cgui.dat 
+* the Webpage reads this file with Ajax
+*/
 
-    FILE *fw = fopen(s,"w");
+void writeGUI()
+{
+FILE *fw;
+char s[1000];
+    
+    sprintf(s,"%s/phpdir/cgui.dat",htmldir);
+    fw = fopen(s,"w");
     if(fw)
     {
+        // printer type information from command M4001
+        // line 0-5
+        fprintf(fw,"%s\n",machinetype?"delta":"cartesian");
+        fprintf(fw,"%d\n",bedsizeX);
+        fprintf(fw,"%d\n",bedsizeY);
+        fprintf(fw,"%d\n",machinesizeZ);
+        fprintf(fw,"%d\n",nozzlenumber);
+        fprintf(fw,"%s\n",hotbedenabled?"yes":"no");
+        
+        // printer status information from command M4000
+        // lines 6-18
+        fprintf(fw,"%d\n",bedtemp);
+        fprintf(fw,"%d\n",bedtargettemp);
+        fprintf(fw,"%d\n",head1temp);
+        fprintf(fw,"%d\n",head1targettemp);
+        fprintf(fw,"%d\n",head2temp);
+        fprintf(fw,"%d\n",head2targettemp);
+        fprintf(fw,"%.3f\n",posX);
+        fprintf(fw,"%.3f\n",posY);
+        fprintf(fw,"%.3f\n",posZ);
+        fprintf(fw,"%d\n",fan1rpm);
+        fprintf(fw,"%d\n",fan2rpm);
+        fprintf(fw,"%02d:%02d\n",printstat/60,printstat - (printstat/60)*60);
+        fprintf(fw,"%d\n",printprogress);
+        
+        // upload status
+        // line 19-21
         fprintf(fw,"%d\n",perc);
         fprintf(fw,"%d\n",offset);
         fprintf(fw,"%d\n",filesize);
+        
+        // SD file list has been updated
+        // line 22 (incrementing number)
+        fprintf(fw,"%d\n",SDfileUpdate);
+        
+        // delete command finished
+        // line 23 (incrementing number)
+        fprintf(fw,"%d\n",delete_finished);
+        
+        // SD card file list
+        // line 24 until end of file
+        for(int i=0; i<SDidx; i++)
+            fprintf(fw,"%s\n",SDfiles[i]);
+        
         fclose(fw);
     }
     else
-        printf("Upload Statusfile write failed\n");
+        printf("cannot open %s for writing\n",s);
 }
-

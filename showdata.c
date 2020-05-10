@@ -44,38 +44,4 @@ void show_data()
     else
         printf("Print Time....... not printing\n");
     printf("Progress......... %d %%\n",printprogress);
-    
-    // write data into a file in the Apache HTML directory
-    char s[1000];
-    sprintf(s,"%s/qidi.dat",htmldir);
-    FILE *fw = fopen(s,"w");
-    if(fw)
-    {
-        fprintf(fw,"%s\n",machinetype?"delta":"cartesian");
-        fprintf(fw,"%d\n",bedsizeX);
-        fprintf(fw,"%d\n",bedsizeY);
-        fprintf(fw,"%d\n",machinesizeZ);
-        fprintf(fw,"%d\n",nozzlenumber);
-        fprintf(fw,"%s\n",hotbedenabled?"yes":"no");
-        
-        fprintf(fw,"%d\n",bedtemp);
-        fprintf(fw,"%d\n",bedtargettemp);
-        fprintf(fw,"%d\n",head1temp);
-        fprintf(fw,"%d\n",head1targettemp);
-        fprintf(fw,"%d\n",head2temp);
-        fprintf(fw,"%d\n",head2targettemp);
-        fprintf(fw,"%.3f\n",posX);
-        fprintf(fw,"%.3f\n",posY);
-        fprintf(fw,"%.3f\n",posZ);
-        fprintf(fw,"%d\n",fan1rpm);
-        fprintf(fw,"%d\n",fan2rpm);
-        fprintf(fw,"%02d:%02d\n",printstat/60,printstat - (printstat/60)*60);
-        fprintf(fw,"%d\n",printprogress);
-        
-        fclose(fw);
-    }
-    else
-    {
-        printf("ERROR: cannot write to HTML folder. This program must run as root\n");
-    }
 }

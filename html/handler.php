@@ -17,6 +17,11 @@
             {
                 uploadFile();
             }
+            
+            if(isset($_POST['delete']))
+            {
+                deleteFile();
+            }
         }
         else
         {
@@ -89,8 +94,24 @@
             header( "refresh:4;url=index.html?reload=".$myrnd);
             echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
         }
-
+    }
+    
+    function deleteFile()
+    {
+        $prfile = $_POST['SDfiles'];
+        if(strlen($prfile) < 1)
+        {
+            $infotext = "ERROR: Please SELECT the file to be deleted in the list box<br>";
+        }
+        else
+        {
+            $infotext = "Start deleting file :".$prfile."<br>";
+            sendToqidi_connect("d".$prfile);
+        }
         
+        $myrnd = mt_rand();
+        header( "refresh:4;url=index.html?reload=".$myrnd);
+        echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
     }
     
     // send a message to the qidi_connect c-program

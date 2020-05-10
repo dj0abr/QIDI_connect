@@ -48,6 +48,8 @@ void show_data();
 int decodeM20(char *s);
 void startUDP();
 void showperc(int perc, int offset, int filesize);
+void sdlistok(int status);
+void writeGUI();
 
 extern char broadcastIP[20];
 extern int keeprunning;
@@ -77,4 +79,4 @@ extern int verbose;
 extern int printstat;
 extern int printprogress;
 extern char htmldir[256];
-
+extern int delete_finished;
