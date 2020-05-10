@@ -19,6 +19,11 @@
 	font-size: 20px;
     font-weight: bold;
 }
+.maincell1 {
+	border: 0px solid #999999;
+	display: table-cell;
+	padding: 3px 10px;
+}
 
 .copyright {
 	font-size: 10px;
@@ -128,30 +133,6 @@ div.blueTable {
     border-top-color: #cccccc;
 }
 
-
-.myButton {
-	box-shadow: 0px 10px 14px -7px #276873;
-	background:linear-gradient(to bottom, #599bb3 5%, #408c99 100%);
-	background-color:#599bb3;
-	border-radius:8px;
-	display:inline-block;
-	cursor:pointer;
-	color:#ffffff;
-	font-family:Arial;
-	font-size:20px;
-	font-weight:bold;
-	padding:13px 32px;
-	text-decoration:none;
-	text-shadow:0px 1px 0px #3d768a;
-}
-.myButton:hover {
-	background:linear-gradient(to bottom, #408c99 5%, #599bb3 100%);
-	background-color:#408c99;
-}
-.myButton:active {
-	position:relative;
-	top:1px;
-}
 </style>
 
 <script>
@@ -165,6 +146,7 @@ function start()
 {
     myOnloadFunction();
     setInterval(myOnloadFunction, 2000);
+    setInterval(loadUploadStatus, 1000);
     loadSDfiles();
 }
 
@@ -205,6 +187,57 @@ function handleSDContent()
         var lines = xmlHttpObject.responseText.split('\n');
         // and fill into the GUI
         fillSDfiles(lines);
+    }
+}
+
+function loadUploadStatus()
+{
+    // request to read a file on the server
+    xmlHttpObject.open('get',"qidi_uploadstatus.dat?cb=` + myrand");
+    xmlHttpObject.onreadystatechange = handleULContent;
+    xmlHttpObject.send(null);
+    return false;
+}
+
+var ulstatus = 0;
+var oldulstatus = 0;
+
+function handleULContent()
+{
+    if (xmlHttpObject.readyState == 4)
+    {
+        // File contents received, split into lines
+        var lines = xmlHttpObject.responseText.split('\n');
+        
+        var perc = parseInt(lines[0]);      // the first line contains the upload percentage
+        var offset = parseInt(lines[1]);    // offset currently uploading
+        var filesize = parseInt(lines[2]);  // total size of file
+        
+        // show / hide the progress bar
+        var pdiv = document.getElementById("ulprogress");
+        if(perc < 0)
+        {
+            pdiv.style.display = "none";
+            ulstatus = 0;
+        }
+        else
+        {
+            pdiv.style.display = "block";
+            ulstatus = 1;
+        }
+        
+        if(oldulstatus == 1 && ulstatus == 0)
+        {
+            // Download just finished
+            loadSDfiles();
+        }
+        oldulstatus = ulstatus;
+        
+        // set progress bar value
+        var p = document.getElementById("ulstatus").value = perc;
+        
+        var lab = document.getElementById("ullabel");
+        lab.innerText = perc + "% (" + offset/1000 + "kB of " + filesize/1000 + "kB)";
     }
 }
 
@@ -250,16 +283,17 @@ function fillSDfiles(lines)
             index++;
         }
     }
+    
+    document.getElementById("SDfiles").selectedIndex = "2";
 }
 
 </script>
-
 
     <div class="mainwindow">
         <div class="maincell" id="maincell1">
             QIDI X-MAX Live Cam
             <br>
-            <img src="http://wx.spdns.de:8086/?action=stream" />
+            <img src="http://MyCameraIPorURL:8086/?action=stream" />
         </div>
         <div class="maincell" id="maincell2">
             Printer Status
@@ -355,19 +389,25 @@ function fillSDfiles(lines)
           <div class="select">
             <select id="SDfiles" name ="SDfiles" size="10"></select>
           </div>
+          <input type="submit" name="print" class="myButton" value="3D-PRINT selected SD-card file">
         </div>
-        <div class="maincell" id="maincell2a">
-            Operation<br><br>
-            Password:
-            <input type="text" name="password" id="password" value=""><br><br>
-            <input type="submit" name="upload" class="myButton" value="UPLOAD">
-            <input type="submit" name="print" class="myButton" value="PRINT">
+        <div class="maincell1" id="maincell2a">
+            <p style="font-size:20px;font-weight:bold;">Operation</p>
+            <label for="password">Password:</label>
+            <input type="text" name="password" id="password" value=""><br><br><br>
+            <input type="file" name="fileToUpload" id="fileToUpload" class="myButton"><br>
+            <input type="submit" name="upload" class="myButton" value="UPLOAD"><br><br>
         </div>
     </div>
     </form>
     <br>
 
-<div class="copyright">
+    <div id="ulprogress" style="display: none;">
+        <label id="ullabel" for="ulstatus">Uploading progress:</label>
+        <progress id="ulstatus" value="64" max="100" style="width: 500px;"></progress>    
+    </div>
+    <br>
+<div class="copyright"><br>
 by DJ0ABR, dj0abr@darc.de
 </div>
 </body>

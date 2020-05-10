@@ -133,6 +133,7 @@ void INThandler(int sig)
 {
     printf("\nstopped by Ctrl-C, cleaning system ...");
     closeUDP();
+    showperc(-1,0,1);
     keeprunning = 0;
     sleep(1);
 	exit(0);
@@ -177,6 +178,9 @@ int opt;
     // start local UDP connection to php
     startUDP();
     
+    // init perecntage file
+    showperc(-1,0,1);
+    
     while(keeprunning)
     {
         int r = searchQidiIP(); // search for a QIDI 3d printer
@@ -203,8 +207,6 @@ void *getkey(void *dummy)
         char c=getc(stdin);
         if(c >='a' && c <= 'z')
         {
-            command = c;
-            
             if(c == 'x')
             {
                 printf("stopping program ... \n");

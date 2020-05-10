@@ -12,6 +12,7 @@
             {
                 printFile();
             }
+
             if(isset($_POST['upload']))
             {
                 uploadFile();
@@ -20,7 +21,7 @@
         else
         {
             header( "refresh:5;url=index.html" );
-            $infotext = "unauthorized access, wrong password";
+            $infotext = "unauthorized access, wrong password:".$_POST['password']."  ".$my_password;
             echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
         }
 
@@ -28,6 +29,8 @@
     else
     {
         header( "refresh:1;url=index.html");
+        $infotext = "???";
+        echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
     }
     
     function printFile()
@@ -35,7 +38,7 @@
         $prfile = $_POST['SDfiles'];
         if(strlen($prfile) < 1)
         {
-            $infotext = $infotext."ERROR: Please SELECT the file to be printed in the list box<br>";
+            $infotext = "ERROR: Please SELECT the file to be printed in the list box<br>";
         }
         else
         {
@@ -50,6 +53,44 @@
     
     function uploadFile()
     {
+        
+
+        // first upload the file
+        $target_dir = "phpdir/";
+        $base_name = basename($_FILES["fileToUpload"]["name"]);
+        $target_file = $target_dir.$base_name;
+        $infotext = " ";
+        
+        switch ($_FILES['fileToUpload']['error']) {
+            case UPLOAD_ERR_OK:
+                break;
+            case UPLOAD_ERR_NO_FILE:
+                $infotext = 'No file sent.';
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                $infotext = 'Exceeded filesize limit.';
+            default:
+                $infotext = 'Unknown errors.';
+        }   
+        
+        // and store it in the html folder als "tmp_name"
+        if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) 
+        {
+            $infotext = "Upload started: ".basename( $_FILES["fileToUpload"]["name"]);
+            header( "refresh:1;url=index.html?reload=".$myrnd);
+            echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
+            // the file is now located in ...html/phpdir
+            // send a message to qidi_connect that the file is available for upload
+            sendToqidi_connect($base_name);
+        } 
+        else 
+        {
+            $infotext = "ERROR: there was an error uploading your file.";
+            header( "refresh:4;url=index.html?reload=".$myrnd);
+            echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
+        }
+
+        
     }
     
     // send a message to the qidi_connect c-program

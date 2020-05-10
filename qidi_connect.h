@@ -47,6 +47,7 @@ int decodeM4000(char *s);
 void show_data();
 int decodeM20(char *s);
 void startUDP();
+void showperc(int perc, int offset, int filesize);
 
 extern char broadcastIP[20];
 extern int keeprunning;
@@ -71,7 +72,6 @@ extern int machinesizeZ;
 extern int nozzlenumber;
 extern int hotbedenabled;
 extern int txconfirmed;
-extern char command;
 extern char uploadfilename[256];
 extern int verbose;
 extern int printstat;

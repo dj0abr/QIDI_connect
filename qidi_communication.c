@@ -18,10 +18,10 @@
                     
 void writeLine(char *line, int len, int offset);
 
-char command = 0;
 int writestatus = 0;
 char uploadfilename[256];
 char printfile[256] = {0};
+char webfile[256] = {0};
 
 /*
  * Find QIDI 3D printer in the network:
@@ -97,7 +97,7 @@ int writefile();
 int loopstat;
 
 #define IDLE_TIME   2000
-#define CMD_TIMEOUT 1000    // ms
+#define CMD_TIMEOUT 5000    // ms
 
 void qidi_loop()
 {
@@ -189,8 +189,10 @@ static int giveup = 0;
         case 280:   if(writefile() == 1)
                     {
                         // finished writing file
-                        loopstat = 4000;
+                        loopstat = 20;  // re-read file list on SD card
                         timeout = 0;
+                        // disable percentage file
+                        showperc(-1,0,1);
                     }
                     break;
                     
@@ -216,21 +218,33 @@ static int giveup = 0;
                     break;
     }
     
-    // check for a user command
-    if(command == 'u') // upload a gcode file
-        loopstat = 28;
-
-    command = 0;
-    
     // check for a WEB command, which is a file in the html folder
     
     // check for a filename to be printed, received from php via udp
-    if(*printfile)
+    if(*webfile)
     {
-        printf("PRINT: %s\n",printfile);
-        // loopstat = 6030; // activate for start printing
+        char *hp = strchr(webfile,'|');
+        if(hp)
+        {
+            // start 3d printing
+            strcpy(printfile,hp+1);
+            printf("PRINT: %s\n",printfile);
+            // loopstat = 6030; // activate for start printing
+        }
+        else
+        {
+            // file upload
+            // !!! to allow upload of big file !!!
+            // modify /etc/php.../php.ini, value: upload_max_filesize
+            // and also: post_max_site (a bit more than upload_max_filesize
+            // and also: memory_limit (even a bit more)
+            // and possible: max_execution_time and: max_input_time if a big file upload timeouts
+            strcpy(uploadfilename,webfile);
+            printf("UPLOAD: %s\n",uploadfilename);
+            loopstat = 28; // activate for uploading
+        }
         
-        *printfile = 0;
+        *webfile = 0;
     }
 }
 
@@ -252,7 +266,7 @@ int writefile()
 {
 char str[1000];
 char *s;
-int timeout = 0;
+static int timeout = 0;
 struct stat st;
 int perc;
 static int filesize;
@@ -262,20 +276,27 @@ static FILE *fr;
 static int finished = 0;
 static int rlen;
 static int resend = 0;
-static int lastperc = 0;
+static int lastperc = -1;
 
     switch (writestatus)
     {
         case 0: // open the file to upload
-                fr = fopen(uploadfilename,"r");
+                sprintf(str,"%s/phpdir/%s",htmldir,uploadfilename);
+                fr = fopen(str,"r");
                 if(!fr)
                 {
                     printf("cannot open %s\n",uploadfilename);
                     return 1;
                 }
                 // get total size of the file
-                if(stat(uploadfilename,&st)==0)
+                if(stat(str,&st)==0)
                     filesize = st.st_size;
+                
+                if(filesize < 2)
+                {
+                    printf("file too small\n");
+                    return 1;
+                }
                 
                 sprintf(str,"M28 %s",uploadfilename);   // TODO: enter file name
                 printf("send file: %s\n",str);
@@ -284,22 +305,26 @@ static int lastperc = 0;
                 offset = 0;
                 finished = 0;
                 resend = 0;
+                timeout = 0;
                 break;
         case 1: // wait for "ok" confirmation to M28
+                //printf("wait for ok on M28. Timeout:%d\n",timeout);
                 s = readRXbuffer();
                 if(s)
                 {
                     if(strstr(s,"ok"))
                     {
+                        if(verbose) printf("OK received\n");
                         // confirmed, begin sending the file
                         writestatus = 2;
+                        timeout = 0;
                         break;
                     }
                 }
                 if(++timeout > CMD_TIMEOUT)
                 {
                     // qidi does not respond, give up writing file
-                    printf("upload ERROR 1\n");
+                    printf("upload ERROR timeout in 1\n");
                     fclose(fr);
                     return 1;
                 }
@@ -313,15 +338,21 @@ static int lastperc = 0;
                 
                 writeLine(fileline,rlen,offset);
                 if(rlen != CHUNKSIZE) finished = 1;
+                timeout = 0;
                 
                 writestatus = 3;
                 
                 // show bytes left
-                perc = 100-((filesize-offset)*100)/filesize;
-                if(perc/10 != lastperc/10)
+                if(filesize > 1)
                 {
-                    printf("sent: %d %%\n",perc);
-                    lastperc = perc;
+                    perc = (int)(100-((filesize-offset)*100)/filesize);
+                    if(perc != lastperc)
+                    {
+                        if((perc%10) == 0)
+                            printf("sent: %d %% (%d of %d)\n",perc,offset,filesize);
+                        showperc(perc,offset,filesize);
+                        lastperc = perc;
+                    }
                 }
                 break;
                 
@@ -344,8 +375,7 @@ static int lastperc = 0;
                     }
                     else
                     {
-                        // resend last chunk
-                        resend = 1;
+                        resend = 1; // resend last chunk
                     }
                 }
                 if(++timeout > CMD_TIMEOUT)
@@ -464,12 +494,7 @@ socklen_t fromlen;
         udpdata[len] = 0;
         //printf("read %d bytes from sock: %d. Message:%s\n", len, 8899,udpdata);
         
-        // prepare filename for 3d printing
-        char *hp = strchr(udpdata,'|');
-        if(hp)
-        {
-            strcpy(printfile,hp+1);
-        }
+        strcpy(webfile,udpdata); // it is a file for upload
     }
     
     pthread_exit(NULL); // self terminate this thread

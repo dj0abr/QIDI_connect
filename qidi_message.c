@@ -327,3 +327,23 @@ double getElement_float(char *s, char *elem, int elemnum)
     if(sres == NULL) return -9999;
     return atof(sres);
 }
+
+// write upload status into a file for the webpage
+void showperc(int perc, int offset, int filesize)
+{
+char s[256];
+
+    sprintf(s,"%s/qidi_uploadstatus.dat",htmldir);
+
+    FILE *fw = fopen(s,"w");
+    if(fw)
+    {
+        fprintf(fw,"%d\n",perc);
+        fprintf(fw,"%d\n",offset);
+        fprintf(fw,"%d\n",filesize);
+        fclose(fw);
+    }
+    else
+        printf("Upload Statusfile write failed\n");
+}
+
