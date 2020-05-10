@@ -21,7 +21,7 @@
         else
         {
             header( "refresh:5;url=index.html" );
-            $infotext = "unauthorized access, wrong password:".$_POST['password']."  ".$my_password;
+            $infotext = "unauthorized access, wrong password";
             echo "<p style='font-size:30px; color:red;'>".$infotext."</p>";
         }
 

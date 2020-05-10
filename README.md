@@ -56,6 +56,8 @@ memory_limit
 
 set to a value larger then yout largest gcode file, i.e.: 300M
 
+After changing the file restart apache or reboot (sudo service spache2 restart)
+
 # start the software
 
 sudo ./qidi_connect [options]
