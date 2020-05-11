@@ -319,6 +319,7 @@ static int finished = 0;
 static int rlen;
 static int resend = 0;
 static int lastperc = -1;
+static int num_resends = 0;
 
     switch (writestatus)
     {
@@ -374,7 +375,10 @@ static int lastperc = -1;
                 
         case 2:  // send gcode data
                 if(resend == 0)
+                {
                     rlen = fread(fileline, 1, CHUNKSIZE, fr);
+                    num_resends=0;
+                }
                 else
                     printf("resend offset: %d\n",offset);
                 
@@ -420,15 +424,34 @@ static int lastperc = -1;
                     }
                     else
                     {
+                        printf("transfer error, resend\n");
                         resend = 1; // resend last chunk
+                        writestatus = 2;
+                        num_resends++;
+                        
+                        if(++num_resends > 10)
+                        {
+                            // qidi does not respond, give up writing file
+                            printf("upload ERROR 1\n");
+                            fclose(fr);
+                            return 2;
+                        }
                     }
                 }
                 if(++timeout > CMD_TIMEOUT)
                 {
-                    // qidi does not respond, give up writing file
-                    printf("upload ERROR 1\n");
-                    fclose(fr);
-                    return 2;
+                    printf("no response, resend\n");
+                    resend = 1; // resend last chunk
+                    writestatus = 2;
+                    num_resends++;
+                    
+                    if(++num_resends > 10)
+                    {
+                        // qidi does not respond, give up writing file
+                        printf("upload ERROR 1\n");
+                        fclose(fr);
+                        return 2;
+                    }
                 }
                 break;
                 
