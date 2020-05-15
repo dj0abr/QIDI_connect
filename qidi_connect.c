@@ -75,14 +75,26 @@ char *sret;
             {
                 strcpy(htmldir,cp);
                 printf("Webserver Path: %s\n",htmldir);
+                
                 // copy html folder to Apache html path
                 char s[300];
                 sprintf(s,"cp html/* %s",htmldir);
                 int r = system(s);
                 if(r == -1)
-                {
                     printf("copying of HTML files failed\n");
-                }
+                
+                // create phpdir
+                sprintf(s,"mkdir %s/phpdir",htmldir);
+                r = system(s);
+                if(r == -1)
+                    printf("creating phpdir failed\n");
+                
+                // set phpdir access to 777. This is required for the upload funktion
+                // to write files
+                sprintf(s,"chmod 777 %s/phpdir",htmldir);
+                r = system(s);
+                if(r == -1)
+                    printf("chmod for phpdir failed\n");
             }
             else
             {
@@ -160,7 +172,7 @@ int opt;
 						break;
             case 'v':   verbose = 1;
                         break;
-			case 'V': 	printf("QIDI Linux Remote Control, V0.2, by Kurt Moraw, DJ0ABR\n");
+			case 'V': 	printf("QIDI Linux Remote Control, V0.4, by Kurt Moraw, DJ0ABR\n");
 						exit(0);
 			default:	break;	
 		}

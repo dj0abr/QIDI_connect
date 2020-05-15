@@ -1,0 +1,14 @@
+echo Install all files required by qidi_connect
+sudo apt-get update -y
+sudo apt-get install apache2 php -y
+sudo apt-get install build-essential imagemagick libv4l-dev libjpeg-dev ffmpeg cmake -y
+
+# install mjpeg_streamer
+# Clone Repo in /tmp
+cd /tmp
+git clone https://github.com/jacksonliam/mjpg-streamer.git
+cd mjpg-streamer/mjpg-streamer-experimental
+make
+sudo make install
+echo mpeg_streamer usage to stream to port 8087
+echo mjpg_streamer -i "./input_uvc.so -vf true -hf true  -f 25 -r 640x480" -o "./output_http.so -p 8087 -w ./www"

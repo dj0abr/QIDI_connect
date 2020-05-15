@@ -457,6 +457,7 @@ static int num_resends = 0;
                 
         case 4: // save file to SD card
                 sendToQidi("M29");
+                timeout = 0;
                 writestatus = 5;
                 break;
                 
@@ -471,6 +472,7 @@ static int num_resends = 0;
                         fclose(fr);
                         return 1;
                     }
+                    timeout = 0;
                 }
                 if(++timeout > CMD_TIMEOUT)
                 {

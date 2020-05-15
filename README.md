@@ -1,12 +1,14 @@
 # QIDI_connect
 Webbrowser based Communication with QIDI 3D printers for Linux
 
+Version 0.4 (May,15  2020)
+
 All in one nice GUI in a Web Browser:
 * show QIDI 3D printer status
 * show files on SD card
 * gcode file upload
 * start 3d print job
-* embed a webcam
+* embed webcams
 
 # System requirements:
 a LINUX computer, like an SBC (Raspberry PI, Odroid...) but also any other Linux Destop PC.
@@ -31,18 +33,9 @@ make
 
 # prepare the system
 
-if not already done, install the apache web server and php
+run the script  
 
-sudo apt-get install apache2 php
-
-! create a new folder "phpdir" in the apache html folder. In ubuntu the apache HTML folder is located in /var/www/html.
-
-cd /var/www/html
-
-sudo mkdir phpdir
-
-chmod 755 phpdir
-
+./prepare_ubuntu
 
 # prepare php for uploading big files
 
@@ -54,12 +47,13 @@ upload_max_filesize
 post_max_site
 memory_limit
 
-set to a value larger then yout largest gcode file, i.e.: 300M
+set to a value larger then your largest gcode file, i.e.: 300M
 
 After changing the file restart apache or reboot (sudo service spache2 restart)
 
 # start the software
 
+in the folder where qidi_connect is located: 
 sudo ./qidi_connect [options]
 
 (sudo is needed because qidi_connect needs to write files into the apache html folder)
@@ -85,7 +79,8 @@ this has nothing to do with this software, but makes the GUI looking nicer.
 
 I am doing this on a raspberry PI. I have a standard raspberry PI camera connected to the camera port.
 
-first install mpeg_streamer from the github repo: mjpg-streamer-experimental. 
+first install mpeg_streamer from the github repo: mjpg-streamer-experimental (this job is done by the script: prepare_ubuntu).
+
 Then start your camera with this command:
 ./mjpg_streamer -i "./input_uvc.so -vf true -hf true  -f 25 -r 640x480" -o "./output_http.so -p 8086 -w ./www"
 

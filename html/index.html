@@ -1,10 +1,22 @@
+<!--
+ * Remote software
+ * for QIDI 3d printers
+ * 
+ * System Requirements:
+ * Linux
+ * runs on small SBC like Raspberry PI or Odroid or others
+ * 
+ * (c) Kurt Moraw, DJ0ABR
+ * License: GPL V3
+ -->
+
 <!doctype html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<title>QIDI Web-Remote-Control</title>
+<title>QIDI Web-Remote-Control by DJ0ABR</title>
 </head>
 <body>
 
@@ -18,11 +30,14 @@
 	padding: 3px 10px;
 	font-size: 20px;
     font-weight: bold;
+    width: 640px;
 }
 .maincell1 {
 	border: 0px solid #999999;
 	display: table-cell;
 	padding: 3px 10px;
+	font-size: 20px;
+    font-weight: bold;
 }
 
 .copyright {
@@ -289,14 +304,26 @@ function fillSDfiles(lines)
 }
 
 </script>
+    <form action="/handler.php" method="post" enctype="multipart/form-data">
 
     <div class="mainwindow">
         <div class="maincell" id="maincell1">
-            QIDI X-MAX Live Cam
+            QIDI X-MAX Live Cam - 1
             <br>
-            <img src="http://MyCameraIPorURL:8086/?action=stream" />
+            <!--CHANGE THIS LINK to point to your own camera-->
+            <img src="http://wx.spdns.de:8087/?action=stream" />
         </div>
-        <div class="maincell" id="maincell2">
+        <div class="maincell1" id="maincell2">
+            QIDI X-MAX Live Cam - 2
+            <br>
+            <!--CHANGE THIS LINK to point to your own camera-->
+            <!--if you have only one camera, then delete this link-->
+            <img src="http://wx.spdns.de:8086/?action=stream" />
+        </div>
+    </div>
+    
+    <div class="mainwindow">
+        <div class="maincell" id="maincell1b">
             Printer Status
             <div class="divTable blueTable">
                 <div class="divTableHeading">
@@ -381,22 +408,24 @@ function fillSDfiles(lines)
                 </div>
             </div>
         </div>
-    </div>
-    
-    <form action="/handler.php" method="post" enctype="multipart/form-data">
-    <div class="mainwindow">
-        <div class="maincell" id="maincell1a">
+        <div class="maincell1" id="maincell2b">
           SD-card
           <div class="select">
-            <select id="SDfiles" name ="SDfiles" size="10"></select>
+            <select id="SDfiles" name ="SDfiles" size="23"></select>
           </div>
           <input type="submit" id="printbutton" name="print" class="myButton" value="3D-PRINT selected SD-card file">
           <input type="submit" id="delbutton" name="delete" class="myButton" value="DELETE selected SD-card file">
         </div>
-        <div class="maincell1" id="maincell2a">
-            <p style="font-size:20px;font-weight:bold;">Operation</p>
+    </div>
+    
+    <div class="mainwindow">
+        <div class="maincell" id="maincell1a">
+            <p style="font-size:20px;font-weight:bold;">Security</p>
             <label for="password">Password:</label>
             <input type="text" name="password" id="password" value=""><br><br><br>
+        </div>
+        <div class="maincell1" id="maincell2a">
+            <p style="font-size:20px;font-weight:bold;">Operation</p>
             <input type="file" id="fileselector" name="fileToUpload" id="fileToUpload" class="myButton"><br>
             <input type="submit" id="uploadbutton" name="upload" class="myButton" value="UPLOAD"><br><br>
         </div>
@@ -408,7 +437,6 @@ function fillSDfiles(lines)
         <label id="ullabel" for="ulstatus">Uploading progress:</label>
         <progress id="ulstatus" value="64" max="100" style="width: 500px;"></progress>    
     </div>
-    <br>
 <div class="copyright"><br>
 by DJ0ABR, dj0abr@darc.de
 </div>
