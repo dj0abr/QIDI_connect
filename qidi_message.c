@@ -389,8 +389,11 @@ char s[1000];
         // line 23 (incrementing number)
         fprintf(fw,"%d\n",delete_finished);
         
+        // line 24: 3d printer 0=offline, 1=found but no response 2=active
+        fprintf(fw,"%d\n",printer_online);
+        
         // SD card file list
-        // line 24 until end of file
+        // line 25 until end of file
         for(int i=0; i<SDidx; i++)
             fprintf(fw,"%s\n",SDfiles[i]);
         

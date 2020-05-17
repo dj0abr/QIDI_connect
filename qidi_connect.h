@@ -80,3 +80,4 @@ extern int printstat;
 extern int printprogress;
 extern char htmldir[256];
 extern int delete_finished;
+extern int printer_online;

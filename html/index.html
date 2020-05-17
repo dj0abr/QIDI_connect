@@ -182,7 +182,7 @@ function getContent()
         // check if the sd card file list was updated
         if(lines[22] != last_SDfileUpdate)
         {
-            fillSDfiles(lines.slice(24));
+            fillSDfiles(lines.slice(25));
             last_SDfileUpdate = lines[22];
         }
         
@@ -207,7 +207,7 @@ function handleULContent(lines)
     var but2 = document.getElementById("uploadbutton");
     var but3 = document.getElementById("fileselector");
     var but4 = document.getElementById("delbutton");
-
+    
     // show / hide the progress bar
     var pdiv = document.getElementById("ulprogress");
     if(perc < 0)
@@ -272,6 +272,25 @@ function fillData(lines)
     document.getElementById("value12").innerHTML = lines[15];
     document.getElementById("value13").innerHTML = lines[17];
     document.getElementById("value14").innerHTML = lines[18];
+    
+    // show network status
+    var onlinestatus = parseInt(lines[24]); // network status of the printer
+    var statelem = document.getElementById("value0");
+    if(onlinestatus == 0) 
+    {
+        statelem.innerHTML = "offline";
+        statelem.style.color = "red";
+    }
+    if(onlinestatus == 1) 
+    {   
+        statelem.innerHTML = "waiting";
+        statelem.style.color = "yellow";
+    }
+    if(onlinestatus == 2) 
+    {
+        statelem.innerHTML = "active";
+        statelem.style.color = "green";
+    }
 }
 
 function fillSDfiles(lines)
@@ -335,6 +354,11 @@ function fillSDfiles(lines)
                 </div>
 
                 <div class="divTableBody">
+                    <div class="divTableRow">
+                        <div class="divTableCell" id="param0">Printer Status</div>
+                        <div class="divTableCell" id="value0"></div>
+                        <div class="divTableCell" id="unit0"></div>
+                    </div>
                     <div class="divTableRow">
                         <div class="divTableCell" id="param1">Machine Type</div>
                         <div class="divTableCell" id="value1"></div>

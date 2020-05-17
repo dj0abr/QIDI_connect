@@ -33,7 +33,7 @@ make
 
 # prepare the system
 
-run the script  
+run the script
 
 ./prepare_ubuntu
 
@@ -79,13 +79,17 @@ this has nothing to do with this software, but makes the GUI looking nicer.
 
 I am doing this on a raspberry PI. I have a standard raspberry PI camera connected to the camera port.
 
-first install mpeg_streamer from the github repo: mjpg-streamer-experimental (this job is done by the script: prepare_ubuntu).
+The following is already done by the script: prepare_ubuntu
+===============================================================
+first install mpeg_streamer from the github repo: mjpg-streamer-experimental
 
 Then start your camera with this command:
 ./mjpg_streamer -i "./input_uvc.so -vf true -hf true  -f 25 -r 640x480" -o "./output_http.so -p 8086 -w ./www"
 
 It will stream the video to port 8086.
 Now open the file index.html, look for 8086 and modify the URL so it points to your computer.
+
+The website index.html is prepared to display two video streams. If you don't need it then simply delete the video links (see comment in index.html)
 
 # access from outside your home through the internet
 

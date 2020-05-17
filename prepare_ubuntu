@@ -1,14 +1,31 @@
-echo Install all files required by qidi_connect
+# Port for the Video Stream (only if required)
+VIDEOPORT=8086
+STARTSCRIPT=qidistart
+QIDI_CONNECT_FOLDER=/home/pi/QIDI_connect
+
+# Install all files required by qidi_connect
 sudo apt-get update -y
 sudo apt-get install apache2 php -y
 sudo apt-get install build-essential imagemagick libv4l-dev libjpeg-dev ffmpeg cmake -y
 
 # install mjpeg_streamer
-# Clone Repo in /tmp
-cd /tmp
+cd ~
 git clone https://github.com/jacksonliam/mjpg-streamer.git
 cd mjpg-streamer/mjpg-streamer-experimental
 make
 sudo make install
-echo mpeg_streamer usage to stream to port 8087
-echo mjpg_streamer -i "./input_uvc.so -vf true -hf true  -f 25 -r 640x480" -o "./output_http.so -p 8087 -w ./www"
+
+# generate start script for the videostream in pi-home directory
+# the video stream is on port VIDEOPORT, change this if you need a different port
+echo "cd ~/mjpg-streamer/mjpg-streamer-experimental" > /home/pi/$STARTSCRIPT
+echo './mjpg_streamer -i "./input_uvc.so -vf true -hf true  -f 25 -r 640x480" -o "./output_http.so -p 8087 -w ./www" &' >> /home/pi/$STARTSCRIPT
+
+# also start qidi_connect
+echo "cd $QIDI_CONNECT_FOLDER" >> /home/pi/$STARTSCRIPT
+echo "sudo ./qidi_connect" >> /home/pi/$STARTSCRIPT
+
+chmod 755 /home/pi/$STARTSCRIPT
+
+# auto start camera after reboot
+(crontab -l ; echo "@reboot /home/pi/$STARTSCRIPT") 2>&1 | grep -v "no crontab" | sort | uniq | crontab -
+

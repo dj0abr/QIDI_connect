@@ -19,6 +19,7 @@
 void writeLine(char *line, int len, int offset);
 
 int writestatus = 0;
+int printer_online = 0;  // 3d printer 0=offline, 1=found but no response 2=active
 char uploadfilename[256];
 char printfile[256] = {0};
 char webfile[256] = {0};
@@ -74,6 +75,7 @@ int cnt = 0;
             
             // connect to the printer (and disconnect any previous connection)
             loopstat = 4001;
+            printer_online = 1;
             
             return 1;
         }
@@ -120,9 +122,16 @@ static int giveup = 0;
             
         case 40000: // wait for response to M4000
                     s = readRXbuffer();
-                    if(s) decodeM4000(s);
+                    if(s) 
+                    {
+                        decodeM4000(s);
+                        printer_online = 2;
+                    }
                     if(++timeout >= IDLE_TIME)
+                    {
                         loopstat = 4000;    // back to idle
+                        printer_online = 1;
+                    }
                     break;
                     
         case 4001:  // read machine parameters
