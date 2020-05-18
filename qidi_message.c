@@ -372,7 +372,11 @@ char s[1000];
         fprintf(fw,"%.3f\n",posZ);
         fprintf(fw,"%d\n",fan1rpm);
         fprintf(fw,"%d\n",fan2rpm);
-        fprintf(fw,"%02d:%02d\n",printstat/60,printstat - (printstat/60)*60);
+        int hour = printstat / 3600;
+        printstat -= hour*3600;
+        int minute = printstat/60;
+        int second = printstat - minute*60;
+        fprintf(fw,"%02d:%02d:%02d\n",hour,minute,second);
         fprintf(fw,"%d\n",printprogress);
         
         // upload status

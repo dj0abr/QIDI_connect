@@ -108,6 +108,7 @@ char str[1000];
 int res;
 static int timeout = 0;
 static int giveup = 0;
+static int waiting_time = 0;
 
 // status numbers are the same as the gcode command
 // responses from the printer have a status number with additional 0
@@ -126,11 +127,22 @@ static int giveup = 0;
                     {
                         decodeM4000(s);
                         printer_online = 2;
+                        waiting_time = 0;
                     }
                     if(++timeout >= IDLE_TIME)
                     {
                         loopstat = 4000;    // back to idle
-                        printer_online = 1;
+                        
+                        // change status if printer does not respond
+                        if(printer_online > 0)
+                        {
+                            ++waiting_time;
+                            if(waiting_time > 60)
+                                printer_online = 1;
+                            
+                            if(waiting_time > 150)
+                                printer_online = 0;
+                        }
                     }
                     break;
                     
