@@ -66,16 +66,16 @@ options:
 -V ... version information
 ```
 # stopping this software
-
+```js
 you can safely stop the software either by entering x-Enter or by pressing Ctrl-C.
-
+```
 # using the software
-
+```js
 When you start the software watch the messages in the terminal. It shows if your printer was found and if status messages can be downloaded.
 If all works as expected, then open a WebBrowser in any device in your local home network and browse to the IP address of you Raspberry PI or other Linux computer used for this software.
 
 The GUI should be easy to use without any other instructions
-
+```
 # embedding a camera
 
 this has nothing to do with this software, but makes the GUI looking nicer.
