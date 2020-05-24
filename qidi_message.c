@@ -341,6 +341,40 @@ void showperc(int p, int o, int f)
 * the Webpage reads this file with Ajax
 */
 
+char *formatTime(int seconds, int mode)
+{
+static char s[100];
+
+    if(mode == 2)
+    {
+        // calculate expected end time, add seconds to actual time
+        time_t timeNow;
+        time(&timeNow);
+        if(seconds > 0)
+            timeNow += seconds;
+        struct tm* time_info = localtime(&timeNow);
+        strftime(s, sizeof(s), "%H:%M", time_info);
+        return s;
+    }
+
+    int hour = seconds / 3600;
+    int h_seconds = seconds - hour*3600;
+    int minute = h_seconds/60;
+    int second = h_seconds - minute*60;
+    
+    if(hour < 0 || minute < 0 || second < 0)
+    {
+        sprintf(s,"---");
+        return s;
+    }
+    
+    if(mode == 0)
+        sprintf(s,"%02d:%02d:%02d",hour,minute,second);
+    else
+        sprintf(s,"%02d:%02d",hour,minute);
+    return s;
+}
+
 void writeGUI()
 {
 FILE *fw;
@@ -372,32 +406,44 @@ char s[1000];
         fprintf(fw,"%.3f\n",posZ);
         fprintf(fw,"%d\n",fan1rpm);
         fprintf(fw,"%d\n",fan2rpm);
-        int hour = printstat / 3600;
-        printstat -= hour*3600;
-        int minute = printstat/60;
-        int second = printstat - minute*60;
-        fprintf(fw,"%02d:%02d:%02d\n",hour,minute,second);
+        fprintf(fw,"%s\n",formatTime(printstat,0));
         fprintf(fw,"%d\n",printprogress);
         
+        // remaining_time = (printstat[seconds printing time] - 240s[average warm up time])*100 / printprogress
+        if(printstat <= 500 || printprogress < 5)
+        {
+            fprintf(fw,"...\n");
+            fprintf(fw,"...\n");
+            fprintf(fw,"...\n");
+        }
+        else
+        {
+            int total_printtime = ((printstat /*- 240*/) * 100)/printprogress;  // expected print time
+            int remaining_time = total_printtime - printstat;
+            fprintf(fw,"%s\n",formatTime(total_printtime,1));
+            fprintf(fw,"%s\n",formatTime(remaining_time,1));
+            fprintf(fw,"%s\n",formatTime(remaining_time,2));
+        }
+        
         // upload status
-        // line 19-21
+        // line 20-22
         fprintf(fw,"%d\n",perc);
         fprintf(fw,"%d\n",offset);
         fprintf(fw,"%d\n",filesize);
         
         // SD file list has been updated
-        // line 22 (incrementing number)
+        // line 23 (incrementing number)
         fprintf(fw,"%d\n",SDfileUpdate);
         
         // delete command finished
-        // line 23 (incrementing number)
+        // line 24 (incrementing number)
         fprintf(fw,"%d\n",delete_finished);
         
-        // line 24: 3d printer 0=offline, 1=found but no response 2=active
+        // line 25: 3d printer 0=offline, 1=found but no response 2=active
         fprintf(fw,"%d\n",printer_online);
         
         // SD card file list
-        // line 25 until end of file
+        // line 26 until end of file
         for(int i=0; i<SDidx; i++)
             fprintf(fw,"%s\n",SDfiles[i]);
         

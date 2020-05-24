@@ -21,6 +21,7 @@
 <body>
 
 <style>
+
 .mainwindow {
 	display: table-row;
 }
@@ -152,7 +153,6 @@ div.blueTable {
 
 <script>
 
-var myrand = Math.random(); // required to cheat the browser cache
 window.onload = start;
 
 var xmlHttpObject = new XMLHttpRequest();
@@ -160,17 +160,24 @@ var last_SDfileUpdate = -1;
 
 function start()
 {
-    setInterval(readStatusFile, 1000);
+    setInterval(readStatusFile, 2000);
 }
 
 function readStatusFile()
 {
     // request to read a file on the server
-    xmlHttpObject.open('get',"phpdir/cgui.dat?cb=` + myrand");
+    xmlHttpObject.open('get',"phpdir/cgui.dat?cb=" + Math.random());
     xmlHttpObject.onreadystatechange = getContent;
     xmlHttpObject.send(null);
     return false;
 }
+
+// index of data in cgui.dat
+// change it if qidi_message.c - writeGUI() has been changed
+var idx_uploadstatus = 22;
+var idx_SDfileupdate = 25;
+var idx_printerstatus = 27;
+var idx_SDcontents = 28;
 
 function getContent()
 {
@@ -180,14 +187,14 @@ function getContent()
         var lines = xmlHttpObject.responseText.split('\n');
         
         // check if the sd card file list was updated
-        if(lines[22] != last_SDfileUpdate)
+        if(lines[idx_SDfileupdate] != last_SDfileUpdate)
         {
-            fillSDfiles(lines.slice(25));
-            last_SDfileUpdate = lines[22];
+            fillSDfiles(lines.slice(idx_SDcontents));
+            last_SDfileUpdate = lines[idx_SDfileupdate];
         }
         
         // handle upload status
-        handleULContent(lines.slice(19));
+        handleULContent(lines.slice(idx_uploadstatus));
         
         // read machine information and status
         fillData(lines);
@@ -208,7 +215,7 @@ function handleULContent(lines)
     var but3 = document.getElementById("fileselector");
     var but4 = document.getElementById("delbutton");
     
-    // show / hide the progress bar
+    // show / hide the upload progress bar
     var pdiv = document.getElementById("ulprogress");
     if(perc < 0)
     {
@@ -271,10 +278,30 @@ function fillData(lines)
     document.getElementById("value11").innerHTML = lines[14];
     document.getElementById("value12").innerHTML = lines[15];
     document.getElementById("value13").innerHTML = lines[17];
-    document.getElementById("value14").innerHTML = lines[18];
+    //document.getElementById("value14").innerHTML = lines[18];
+    document.getElementById("value15").innerHTML = lines[19];
+    document.getElementById("value16").innerHTML = lines[20];
+    document.getElementById("value17").innerHTML = lines[21];
+    
+    // show / hide the printing progress bar
+    var printdiv = document.getElementById("printprogress");
+    var prog = lines[18];
+    if(prog < 1)
+    {
+        printdiv.style.display = "none";
+    }
+    else
+    {
+        printdiv.style.display = "block";
+        // set progress bar value
+        document.getElementById("printstatus").value = prog;
+        document.getElementById("printlabel").innerText = "Printing: " + prog + "%";
+        
+        //document.getElementById("printstatus").style.backgroundColor = 'red';
+    }
     
     // show network status
-    var onlinestatus = parseInt(lines[24]); // network status of the printer
+    var onlinestatus = parseInt(lines[idx_printerstatus]); // network status of the printer
     var statelem = document.getElementById("value0");
     if(onlinestatus == 0) 
     {
@@ -419,18 +446,36 @@ function fillSDfiles(lines)
                         <div class="divTableCell" id="value12"></div>
                         <div class="divTableCell" id="unit12">%</div>
                     </div>
-                    <div class="divTableRow">
-                        <div class="divTableCell" id="param13">Print Time</div>
-                        <div class="divTableCell" id="value13"></div>
-                        <div class="divTableCell" id="unit13">min</div>
+                    <div>
                     </div>
                     <div class="divTableRow">
-                        <div class="divTableCell" id="param14">Print Progress</div>
-                        <div class="divTableCell" id="value14"></div>
-                        <div class="divTableCell" id="unit14">%</div>
+                        <div class="divTableCell" id="param13">Printing Time</div>
+                        <div class="divTableCell" id="value13"></div>
+                        <div class="divTableCell" id="unit13">hh:mm:ss</div>
+                    </div>
+                    <div class="divTableRow">
+                        <div class="divTableCell" id="param15">Total Time</div>
+                        <div class="divTableCell" id="value15"></div>
+                        <div class="divTableCell" id="unit15">hh:mm</div>
+                    </div>
+                    <div class="divTableRow">
+                        <div class="divTableCell" id="param16">Remaining Time</div>
+                        <div class="divTableCell" id="value16"></div>
+                        <div class="divTableCell" id="unit16">hh:mm</div>
+                    </div>
+                    <div class="divTableRow">
+                        <div class="divTableCell" id="param17">Expected Completion</div>
+                        <div class="divTableCell" id="value17"></div>
+                        <div class="divTableCell" id="unit17">hh:mm</div>
                     </div>
                 </div>
             </div>
+            <br>
+            <div id="printprogress" style="display: none;">
+                <label id="printlabel" for="printstatus">Printing Progress:</label>
+                <progress id="printstatus" value="64" max="100" style="width: 400px;"></progress>    
+            </div>
+
         </div>
         <div class="maincell1" id="maincell2b">
           SD-card
@@ -458,9 +503,10 @@ function fillSDfiles(lines)
     <br>
 
     <div id="ulprogress" style="display: none;">
-        <label id="ullabel" for="ulstatus">Uploading progress:</label>
+        <label id="ullabel" for="ulstatus">Uploading Progress:</label>
         <progress id="ulstatus" value="64" max="100" style="width: 500px;"></progress>    
     </div>
+    
 <div class="copyright"><br>
 by DJ0ABR, dj0abr@darc.de
 </div>
