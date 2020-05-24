@@ -28,17 +28,16 @@ A network connection to your QIDI 3D printer
 - view status in a bowser
 
 # build the software
-
+```json
 make clean
-
 make
-
+```
 # prepare the system
-
-run the script
+```json
+run the script:
 
 ./prepare_ubuntu
-
+```
 # prepare php for uploading big files
 ```js
 as root open the php.ini file. It is located in /etc/php/..../php.ini  (.... depends on the version number)
