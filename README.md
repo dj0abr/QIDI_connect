@@ -40,18 +40,21 @@ run the script
 ./prepare_ubuntu
 
 # prepare php for uploading big files
-
+```js
 as root open the php.ini file. It is located in /etc/php/..../php.ini  (.... depends on the version number)
 
 change these lines:
 
 upload_max_filesize
+
 post_max_site
+
 memory_limit
 
 set to a value larger then your largest gcode file, i.e.: 300M
 
 After changing the file restart apache or reboot (sudo service spache2 restart)
+```
 
 # start the software
 
