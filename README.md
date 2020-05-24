@@ -70,7 +70,7 @@ options:
 you can safely stop the software either by entering x-Enter or by pressing Ctrl-C.
 ```
 # using the software
-```js
+```json
 When you start the software watch the messages in the terminal. 
 It shows if your printer was found and if status messages can be downloaded.
 If all works as expected, then open a WebBrowser in any device in your 
