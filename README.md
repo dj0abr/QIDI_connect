@@ -1,7 +1,9 @@
 # QIDI_connect
 Webbrowser based Communication with QIDI 3D printers for Linux
 
-Version 0.4 (May,15  2020)
+Version 0.5 (May,24  2020)
+
+![qidi_connect web interface](https://github.com/dj0abr/QIDI_connect/blob/master/sample_small.png)
 
 All in one nice GUI in a Web Browser:
 * show QIDI 3D printer status
