@@ -55,7 +55,7 @@ After changing the file restart apache or reboot (sudo service spache2 restart)
 ```
 
 # start the software
-
+```js
 in the folder where qidi_connect is located: 
 sudo ./qidi_connect [options]
 
@@ -64,7 +64,7 @@ sudo ./qidi_connect [options]
 options:
 -v ... verbose, show a lot of debugging messages
 -V ... version information
-
+```
 # stopping this software
 
 you can safely stop the software either by entering x-Enter or by pressing Ctrl-C.
