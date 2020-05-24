@@ -66,7 +66,7 @@ options:
 -V ... version information
 ```
 # stopping this software
-```js
+```json
 you can safely stop the software either by entering x-Enter or by pressing Ctrl-C.
 ```
 # using the software
@@ -80,10 +80,11 @@ Linux computer used for this software.
 The GUI should be easy to use without any other instructions
 ```
 # embedding a camera
-
+```json
 this has nothing to do with this software, but makes the GUI looking nicer.
 
-I am doing this on a raspberry PI. I have a standard raspberry PI camera connected to the camera port.
+I am doing this on a raspberry PI. I have a standard raspberry PI 
+camera connected to the camera port.
 
 The following is already done by the script: prepare_ubuntu:
 
@@ -93,12 +94,16 @@ Then start your camera with this command:
 ./mjpg_streamer -i "./input_uvc.so -vf true -hf true  -f 25 -r 640x480" -o "./output_http.so -p 8086 -w ./www"
 
 It will stream the video to port 8086.
-Now open the file index.html, look for 8086 and modify the URL so it points to your computer.
+Now open the file index.html, look for 8086 and modify the URL so 
+it points to your computer.
 
-The website index.html is prepared to display two video streams. If you don't need it then simply delete the video links (see comment in index.html)
-
+The website index.html is prepared to display two video streams. 
+If you don't need it then simply delete the video links (see comment in index.html)
+```
 # access from outside your home through the internet
-
-if you plan to use this software from a publich place, then set a password in handler.php !!!!!!!
-Do not use the default password 1234 if the ports are open for the public !!!!!!
-
+```json
+if you plan to use this software from a publich place, 
+then set a password in handler.php !!!!!!!
+Do not use the default password 1234 if the ports 
+are open for the public !!!!!!
+```
