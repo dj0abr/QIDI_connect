@@ -56,7 +56,7 @@ After changing the file restart apache or reboot (sudo service spache2 restart)
 
 # start the software
 ```js
-in the xfolder where qidi_connect is located: 
+in the folder where qidi_connect is located: 
 sudo ./qidi_connect [options]
 
 (sudo is needed because qidi_connect needs to write files into the apache html folder)
