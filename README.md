@@ -46,9 +46,7 @@ as root open the php.ini file. It is located in /etc/php/..../php.ini  (.... dep
 change these lines:
 
 upload_max_filesize
-
 post_max_site
-
 memory_limit
 
 set to a value larger then your largest gcode file, i.e.: 300M
