@@ -412,7 +412,7 @@ char s[1000];
         // remaining_time = (printstat[seconds printing time] - 240s[average warm up time])*100 / printprogress
         if(printstat <= 500 || printprogress < 5)
         {
-            fprintf(fw,"...\n");
+            fprintf(fw,"wait for 5%%\n");
             fprintf(fw,"...\n");
             fprintf(fw,"...\n");
         }
