@@ -16,6 +16,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
+<script type="text/javascript" src="dygraph.js"></script>
+<link rel="stylesheet" type="text/css" href="dygraph.css">
 <title>QIDI Web-Remote-Control by DJ0ABR</title>
 </head>
 <body>
@@ -165,6 +167,8 @@ function start()
 
 function readStatusFile()
 {
+    updateChart();
+
     // request to read a file on the server
     xmlHttpObject.open('get',"phpdir/cgui.dat?cb=" + Math.random());
     xmlHttpObject.onreadystatechange = getContent;
@@ -177,7 +181,8 @@ function readStatusFile()
 var idx_uploadstatus = 22;
 var idx_SDfileupdate = 25;
 var idx_printerstatus = 27;
-var idx_SDcontents = 28;
+var idx_temp = 28;
+var idx_SDcontents = 30;
 
 function getContent()
 {
@@ -198,6 +203,34 @@ function getContent()
         
         // read machine information and status
         fillData(lines);
+        
+        // read and format temperatures
+        readTemp(lines.slice(idx_temp));
+    }
+}
+
+var nozzletemparr = [];
+var bedtemparr = [];
+var first_chart = 0;
+
+function readTemp(lines)
+{
+    // the first line has nozzle temp, the second line bed temp
+    var nozzletemps = lines[0].split(' ');
+    var bedtemps = lines[1].split(' ');
+    
+    nozzletemparr.length = 0;
+    for(var i=0; i<(nozzletemps.length-1); i++)
+        nozzletemparr.push([i-500,parseFloat(nozzletemps[i])]);
+    
+    bedtemparr.length = 0;
+    for(var i=0; i<(bedtemps.length-1); i++)
+        bedtemparr.push([i-500,parseFloat(bedtemps[i])]);
+        
+    if(first_chart == 0)
+    {
+        first_chart = 1;
+        initChart();
     }
 }
 
@@ -237,8 +270,11 @@ function handleULContent(lines)
         pdiv.style.display = "block";
         ulstatus = 1;
         // set progress bar value
-        document.getElementById("ulstatus").value = perc;
-        document.getElementById("ullabel").innerText = perc + "% (" + offset/1000 + "kB of " + filesize/1000 + "kB)";
+        if(perc > 0 && perc < 100)
+        {
+            document.getElementById("ulstatus").value = perc;
+            document.getElementById("ullabel").innerText = perc + "% (" + offset/1000 + "kB of " + filesize/1000 + "kB)";
+        }
     }
 
     if(oldulstatus == 0 && ulstatus == 1)
@@ -347,6 +383,47 @@ function fillSDfiles(lines)
     }
     
     //document.getElementById("SDfiles").selectedIndex = "2";
+}
+
+var nozzletemp, bedtemp;
+function initChart()
+{
+    nozzletemp = new Dygraph(
+        document.getElementById("graph_nozzletemp"),
+        nozzletemparr,
+        {
+            title: "Nozzle Temperature",
+            strokeWidth: 1.5,
+            fillGraph: true,
+            xlabel: "Time [s]",
+            ylabel: "degC",
+            colors:  ["red", '#606060'],
+            rollPeriod: 5,
+        }
+    );
+    
+    bedtemp = new Dygraph(
+        document.getElementById("graph_bedtemp"),
+        bedtemparr,
+        {
+            title: "Bed Temperature",
+            strokeWidth: 1.5,
+            fillGraph: true,
+            xlabel: "Time [s]",
+            ylabel: "degC",
+            colors:  ["green", '#606060'],
+            rollPeriod: 5,
+        }
+    );
+}
+
+function updateChart()
+{
+    if(nozzletemp != null)
+        nozzletemp.updateOptions( { 'file': nozzletemparr } );
+        
+    if(bedtemp != null)
+        bedtemp.updateOptions( { 'file': bedtemparr } );
 }
 
 </script>
@@ -499,6 +576,16 @@ function fillSDfiles(lines)
             <input type="submit" id="uploadbutton" name="upload" class="myButton" value="UPLOAD"><br><br>
         </div>
     </div>
+    
+    <div class="mainwindow">
+        <div class="maincell" id="maincell1a">
+            <div class="chart" id="graph_nozzletemp" style="width:640px; height:300px;"></div>  
+        </div>
+        <div class="maincell1" id="maincell2a">
+            <div class="chart" id="graph_bedtemp" style="width:640px; height:300px;"></div>  
+        </div>
+    </div>
+    
     </form>
     <br>
 
@@ -506,7 +593,7 @@ function fillSDfiles(lines)
         <label id="ullabel" for="ulstatus">Uploading Progress:</label>
         <progress id="ulstatus" value="64" max="100" style="width: 500px;"></progress>    
     </div>
-    
+
 <div class="copyright"><br>
 by DJ0ABR, dj0abr@darc.de
 </div>

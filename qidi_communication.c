@@ -85,6 +85,7 @@ int cnt = 0;
         if(++cnt >= 2)
         {
             printf("no QIDI 3D printer found within 2 seconds ... try again\n");
+            txconfirmed = 0;
             return 0;
         }
     }

@@ -35,7 +35,7 @@
         X,Y,Z:coordinate position, in mm
         F: Extrusion Head 1 fan PWM / extrusion Head 2 fan the maximum value is 256
         D: current read position in gcode file / total gcode file size / pause
-        T: when the file has started, only the file starts printing is valid
+        T: printing time
  *
  * Show files on SD card
  * =====================
@@ -70,8 +70,12 @@
 
 #include "qidi_connect.h"
 
+#define TEMPARRLEN  500
+
 int getElement_int(char *s, char *elem, int elemnum);
 double getElement_float(char *s, char *elem, int elemnum);
+void insert_bedlist(int temp, int targettemp);
+void insert_nozzlelist(int temp, int targettemp);
 
 int bedtemp = 0;
 int bedtargettemp = 0;
@@ -92,6 +96,8 @@ int bedsizeY = 0;
 int machinesizeZ = 0;
 int nozzlenumber = 0;
 int hotbedenabled = 0;
+int noztemparr[TEMPARRLEN];
+int bedtemparr[TEMPARRLEN];
 
 int SDfileUpdate = 0;
 int delete_finished = 0;
@@ -110,11 +116,15 @@ int decodeM4000(char *s)
     bedtargettemp = getElement_int(s,"B:",1);
     if(bedtargettemp == -9999) return 0;
     
+    insert_bedlist(bedtemp,bedtargettemp);
+    
     head1temp = getElement_int(s,"E1:",0);
     if(head1temp == -9999) return 0;
     
     head1targettemp = getElement_int(s,"E1:",1);
     if(head1targettemp == -9999) return 0;
+    
+    insert_nozzlelist(head1temp,head1targettemp);
     
     head2temp = getElement_int(s,"E2:",0);
     if(head2temp == -9999) return 0;
@@ -142,14 +152,14 @@ int decodeM4000(char *s)
     printstat = getElement_int(s,"T:",0);
     if(printstat == -9999) return 0;
         
-    int time_done = getElement_int(s,"D:",0);
-    if(printstat == -9999) return 0;
+    int gcodefile_done = getElement_int(s,"D:",0);   // current read pos in gcode file
+    if(gcodefile_done == -9999) return 0;
         
-    int time_total = getElement_int(s,"D:",1);
-    if(printstat == -9999) return 0;
+    int gcodefile_total = getElement_int(s,"D:",1);  // total gcode file size
+    if(gcodefile_total == -9999) return 0;
     
-    if(time_total != 0)
-        printprogress = (time_done * 100)/time_total;
+    if(gcodefile_total != 0)
+        printprogress = (gcodefile_done * 10000)/gcodefile_total; // resolution 0,01%
     else
         printprogress = 0;
     
@@ -375,6 +385,77 @@ static char s[100];
     return s;
 }
 
+void insert_bedlist(int temp, int targettemp)
+{
+static long lastseconds = 0;
+
+    // get seconds
+    long seconds = time(NULL);
+    
+    if(lastseconds == 0)
+    {
+        // we just started the program, enter the new value at the end of the array
+        for(int i=0; i<TEMPARRLEN; i++)
+            bedtemparr[i] = 0;
+        
+        bedtemparr[TEMPARRLEN-1] = temp;
+    }
+    else
+    {
+        // how many seconds do we have to enter into the list
+        int diffs = (int)(seconds - lastseconds);
+        if(diffs > 0)
+        {
+            // shift the array
+            memmove(bedtemparr, &(bedtemparr[diffs]),sizeof(int)*(TEMPARRLEN-diffs));
+            // insert the new value
+            //printf("-----------> insert %d for %d times\n",temp,diffs);
+            for(int i=0; i<diffs; i++)
+                bedtemparr[TEMPARRLEN-1-i] = temp;
+        }
+    }
+    
+    lastseconds = seconds;
+}
+
+/*
+ * insert new temperature into array.
+ * max. length TEMPARRLEN (500) with 1 seconds for each value
+ * so the list length is 500s.
+*/
+void insert_nozzlelist(int temp, int targettemp)
+{
+static long lastseconds = 0;
+
+    // get seconds
+    long seconds = time(NULL);
+    
+    if(lastseconds == 0)
+    {
+        // we just started the program, enter the new value at the end of the array
+        for(int i=0; i<TEMPARRLEN; i++)
+            noztemparr[i] = 0;
+        
+        noztemparr[TEMPARRLEN-1] = temp;
+    }
+    else
+    {
+        // how many seconds do we have to enter into the list
+        int diffs = (int)(seconds - lastseconds);
+        if(diffs > 0)
+        {
+            // shift the array
+            memmove(noztemparr, &(noztemparr[diffs]),sizeof(int)*(TEMPARRLEN-diffs));
+            // insert the new value
+            //printf("-----------> insert %d for %d times\n",temp,diffs);
+            for(int i=0; i<diffs; i++)
+                noztemparr[TEMPARRLEN-1-i] = temp;
+        }
+    }
+    
+    lastseconds = seconds;
+}
+    
 void writeGUI()
 {
 FILE *fw;
@@ -407,10 +488,11 @@ char s[1000];
         fprintf(fw,"%d\n",fan1rpm);
         fprintf(fw,"%d\n",fan2rpm);
         fprintf(fw,"%s\n",formatTime(printstat,0));
-        fprintf(fw,"%d\n",printprogress);
+        fprintf(fw,"%.2f\n",(double)printprogress/100);
         
-        // remaining_time = (printstat[seconds printing time] - 240s[average warm up time])*100 / printprogress
-        if(printstat <= 500 || printprogress < 5)
+        // remaining_time = (printstat[seconds printing time] - 180s[average warm up time])*100 / printprogress
+        // lines 19..21
+        if(printstat <= 300 || (printprogress/100) < 5)
         {
             fprintf(fw,"wait for 5%%\n");
             fprintf(fw,"...\n");
@@ -418,7 +500,9 @@ char s[1000];
         }
         else
         {
-            int total_printtime = ((printstat /*- 240*/) * 100)/printprogress;  // expected print time
+            // expected print time
+            // give 180s = 3min for warm up
+            int total_printtime = ((printstat - 180) * 10000)/printprogress;  
             int remaining_time = total_printtime - printstat;
             fprintf(fw,"%s\n",formatTime(total_printtime,1));
             fprintf(fw,"%s\n",formatTime(remaining_time,1));
@@ -426,24 +510,34 @@ char s[1000];
         }
         
         // upload status
-        // line 20-22
+        // line 22-24
         fprintf(fw,"%d\n",perc);
         fprintf(fw,"%d\n",offset);
         fprintf(fw,"%d\n",filesize);
         
         // SD file list has been updated
-        // line 23 (incrementing number)
+        // line 25 (incrementing number)
         fprintf(fw,"%d\n",SDfileUpdate);
         
         // delete command finished
-        // line 24 (incrementing number)
+        // line 26 (incrementing number)
         fprintf(fw,"%d\n",delete_finished);
         
-        // line 25: 3d printer 0=offline, 1=found but no response 2=active
+        // line 27: 3d printer 0=offline, 1=found but no response 2=active
         fprintf(fw,"%d\n",printer_online);
         
+        // line 28: Array of nozzle temp values, space separated
+        for(int i=0; i<TEMPARRLEN; i++)
+            fprintf(fw,"%d ",noztemparr[i]);
+        fprintf(fw,"\n");
+        
+        // line 29: Array of bed temp values, space separated
+        for(int i=0; i<TEMPARRLEN; i++)
+            fprintf(fw,"%d ",bedtemparr[i]);
+        fprintf(fw,"\n");
+        
         // SD card file list
-        // line 26 until end of file
+        // line 30 until end of file
         for(int i=0; i<SDidx; i++)
             fprintf(fw,"%s\n",SDfiles[i]);
         
