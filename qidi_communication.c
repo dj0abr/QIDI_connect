@@ -126,6 +126,12 @@ static int waiting_time = 0;
                     s = readRXbuffer();
                     if(s) 
                     {
+                        if(strstr(s,"Error:Wifi reboot,please reconnect!"))
+                        {
+                            // printer has been restarted, M4001 is required for re-connection
+                            loopstat = 4001;
+                            break;
+                        }
                         decodeM4000(s);
                         printer_online = 2;
                         waiting_time = 0;
