@@ -85,7 +85,7 @@ int cnt = 0;
         if(++cnt >= 2)
         {
             printf("no QIDI 3D printer found within 2 seconds ... try again\n");
-            txconfirmed = 0;
+            txconfirmed = 1;
             return 0;
         }
     }
@@ -148,7 +148,12 @@ static int waiting_time = 0;
                                 printer_online = 1;
                             
                             if(waiting_time > 150)
+                            {
                                 printer_online = 0;
+                                // if printer does not respond, send M4001
+                                // which looks to be a "connect" message for qidi printers
+                                loopstat = 4001;
+                            }
                         }
                     }
                     break;

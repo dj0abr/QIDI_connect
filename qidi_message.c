@@ -72,7 +72,7 @@
 
 #define TEMPARRLEN  500
 
-int getElement_int(char *s, char *elem, int elemnum);
+long getElement_int(char *s, char *elem, int elemnum);
 double getElement_float(char *s, char *elem, int elemnum);
 void insert_bedlist(int temp, int targettemp);
 void insert_nozzlelist(int temp, int targettemp);
@@ -152,14 +152,14 @@ int decodeM4000(char *s)
     printstat = getElement_int(s,"T:",0);
     if(printstat == -9999) return 0;
         
-    int gcodefile_done = getElement_int(s,"D:",0);   // current read pos in gcode file
+    long gcodefile_done = getElement_int(s,"D:",0);   // current read pos in gcode file
     if(gcodefile_done == -9999) return 0;
         
-    int gcodefile_total = getElement_int(s,"D:",1);  // total gcode file size
+    long gcodefile_total = getElement_int(s,"D:",1);  // total gcode file size
     if(gcodefile_total == -9999) return 0;
     
     if(gcodefile_total != 0)
-        printprogress = (gcodefile_done * 10000)/gcodefile_total; // resolution 0,01%
+        printprogress = (int)(((double)gcodefile_done * 10000.0)/(double)gcodefile_total); // resolution 0,01%
     else
         printprogress = 0;
     
@@ -315,12 +315,12 @@ static char *sres;
     return NULL;
 }
 
-int getElement_int(char *s, char *elem, int elemnum)
+long getElement_int(char *s, char *elem, int elemnum)
 {
     char *sres = getElement_string(s,elem,elemnum);
     //printf("search %d of <%s> in <%s>, result <%s>\n",elemnum, elem,s,sres);
     if(sres == NULL) return -9999;
-    return atoi(sres);
+    return atol(sres);
 }
 
 double getElement_float(char *s, char *elem, int elemnum)
