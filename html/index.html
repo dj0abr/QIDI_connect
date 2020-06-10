@@ -28,7 +28,7 @@
 	display: table-row;
 }
 .maincell {
-	border: 0px solid #999999;
+	border: 1px solid #999999;
 	display: table-cell;
 	padding: 3px 10px;
 	font-size: 20px;
@@ -36,11 +36,12 @@
     width: 640px;
 }
 .maincell1 {
-	border: 0px solid #999999;
+	border: 1px solid #999999;
 	display: table-cell;
 	padding: 3px 10px;
 	font-size: 20px;
     font-weight: bold;
+    width: 400px;
 }
 
 .copyright {
@@ -109,40 +110,41 @@ div.blueTable {
 .divTableBody { display: table-row-group;}
 
 
-
 .select {
     position: relative;
     display: inline-block;
     margin-bottom: 5px;
     margin-top: 5px;
     width: 100%;
-}    .select select {
-        font-family: 'Arial';
-        display: inline-block;
-        width: 100%;
-        cursor: pointer;
-        padding: 2px 10px;
-        outline: 0;
-        border: 0px solid #000000;
-        border-radius: 8px;
-        background: #D0E4F5;
-        color: #2a2323;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-    }
-        .select select::-ms-expand {
-            display: none;
-        }
-        .select select:hover,
-        .select select:focus {
-            color: #000000;
-            background: #D0E4F5;
-        }
-        .select select:disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
+}    
+
+.select select {
+    font-family: 'Arial';
+    display: inline-block;
+    width: 100%;
+    cursor: pointer;
+    padding: 2px 10px;
+    outline: 0;
+    border: 0px solid #000000;
+    border-radius: 8px;
+    background: #D0E4F5;
+    color: #2a2323;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.select select::-ms-expand {
+    display: none;
+}
+.select select:hover,
+.select select:focus {
+    color: #000000;
+    background: #D0E4F5;
+}
+.select select:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
 .select select:hover ~ .select_arrow,
 .select select:focus ~ .select_arrow {
     border-top-color: #000000;
@@ -361,7 +363,7 @@ function fillSDfiles(lines)
     var SDfiles_element = document.getElementById("SDfiles");
     var index = 0;
     
-    // remove existing optio in select
+    // remove existing options in select
     for(var i = (SDfiles_element.options.length - 1); i >= 0; i--)
         SDfiles_element.remove(i);
     
@@ -392,8 +394,9 @@ function initChart()
         document.getElementById("graph_nozzletemp"),
         nozzletemparr,
         {
-            title: "Nozzle Temperature",
+            //title: "Nozzle Temperature",
             strokeWidth: 1.5,
+            valueRange: [25, 300],
             fillGraph: true,
             xlabel: "Time [s]",
             ylabel: "degC",
@@ -406,8 +409,9 @@ function initChart()
         document.getElementById("graph_bedtemp"),
         bedtemparr,
         {
-            title: "Bed Temperature",
+            //title: "Bed Temperature",
             strokeWidth: 1.5,
+            valueRange: [25, 120],
             fillGraph: true,
             xlabel: "Time [s]",
             ylabel: "degC",
@@ -442,6 +446,10 @@ function updateChart()
             <!--CHANGE THIS LINK to point to your own camera-->
             <!--if you have only one camera, then delete this link-->
             <img src="http://wx.spdns.de:8086/?action=stream" />
+        </div>
+        <div class="maincell1" id="maincell1ad">
+        <p>Nozzle Temperature</p>
+        <div class="chart" id="graph_nozzletemp" style="width:640px; height:300px;"></div> 
         </div>
     </div>
     
@@ -554,13 +562,18 @@ function updateChart()
             </div>
 
         </div>
+        
         <div class="maincell1" id="maincell2b">
-          SD-card
-          <div class="select">
-            <select id="SDfiles" name ="SDfiles" size="23"></select>
-          </div>
-          <input type="submit" id="printbutton" name="print" class="myButton" value="3D-PRINT selected SD-card file">
-          <input type="submit" id="delbutton" name="delete" class="myButton" value="DELETE selected SD-card file">
+            SD-card
+            <div class="select">
+                <select id="SDfiles" class="SDfiles" name ="SDfiles" size="23"></select>
+            </div>
+            <input type="submit" id="printbutton" name="print" class="myButton" value="3D-PRINT selected SD-card file">
+            <input type="submit" id="delbutton" name="delete" class="myButton" value="DELETE selected SD-card file">
+        </div>
+        <div class="maincell1">
+            <p>Bed Temperature</p>
+            <div class="chart" id="graph_bedtemp" style="width:640px; height:300px;"></div>  
         </div>
     </div>
     
@@ -575,16 +588,10 @@ function updateChart()
             <input type="file" id="fileselector" name="fileToUpload" id="fileToUpload" class="myButton"><br>
             <input type="submit" id="uploadbutton" name="upload" class="myButton" value="UPLOAD"><br><br>
         </div>
+        <div class="maincell" id="maincell1b">
+        </div>
     </div>
     
-    <div class="mainwindow">
-        <div class="maincell" id="maincell1a">
-            <div class="chart" id="graph_nozzletemp" style="width:640px; height:300px;"></div>  
-        </div>
-        <div class="maincell1" id="maincell2a">
-            <div class="chart" id="graph_bedtemp" style="width:640px; height:300px;"></div>  
-        </div>
-    </div>
     
     </form>
     <br>
