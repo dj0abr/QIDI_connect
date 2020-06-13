@@ -221,21 +221,24 @@ static int waiting_time = 0;
                     
         case 280:   if(writefile() == 1)
                     {
-                        // finished writing file
+                        printf("finished writing file\n");
                         loopstat = 20;  // re-read file list on SD card
                         timeout = 0;
                         // disable percentage file
                         showperc(-1,0,1);
+                        break;
                     }
                     
                     if(writefile() == 2)
                     {
-                        // upload ERROR, file was not fully uploaded to the 3d printer
+                        printf("upload ERROR, file was not fully uploaded to the 3d printer\n");
                         loopstat = 20;  // re-read file list on SD card
                         timeout = 0;
                         // disable percentage file
                         showperc(-2,0,1);
+                        break;
                     }
+                    printf("5\n");
                     break;
                     
         case 30:     // delete file from SD card
