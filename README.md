@@ -5,6 +5,10 @@ Version 0.5 (May,24  2020)
 
 ![qidi_connect web interface](https://github.com/dj0abr/QIDI_connect/blob/master/sample_small.png)
 
+LIVE sample from my QIDI X-MAX:
+(24/7 online, but of course not always doing a print job)
+![qidi_connect LIVE](https://wx.spdns.de:8085)
+
 All in one nice GUI in a Web Browser:
 * show QIDI 3D printer status
 * show files on SD card

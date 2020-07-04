@@ -206,7 +206,7 @@ int decodeM4001(char *s)
 
 int decodeM4006(char *s)
 {
-    printf("Decode M4006: %s\n",s);
+    //printf("Decode M4006: %s\n",s);
     if(s[0] == 'e')
     {
         printf("Qidi printer reports an error: %s\n",s);
