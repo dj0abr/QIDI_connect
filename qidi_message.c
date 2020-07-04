@@ -111,6 +111,8 @@ int decodeM4000(char *s)
         return 0;
     }
     
+    printf("Decode M4000\n");
+    
     bedtemp = getElement_int(s,"B:",0);
     if(bedtemp == -9999) return 0;
     
@@ -164,8 +166,11 @@ int decodeM4000(char *s)
     else
         printprogress = 0;
     
+    printf("Decode M4000 a\n");
     show_data();
+    printf("Decode M4000 b\n");
     writeGUI();
+    printf("Decode M4000 c\n");
     
     return 1;
 }
@@ -201,22 +206,22 @@ int decodeM4001(char *s)
 
 int decodeM4006(char *s)
 {
-    printf("Decode M4006\n");
+    printf("Decode M4006: %s\n",s);
     if(s[0] == 'e')
     {
         printf("Qidi printer reports an error: %s\n",s);
         return 0;
     }
     
-    char *hp = strchr(s,'\'');
-    if(hp)
+    char *hps = strchr(s,'\'');
+    if(hps)
     {
-        hp++;
-        char *he = strchr(hp,'\'');
+        hps++;
+        char *he = strchr(hps,'\'');
         if(he)
         {
             *he = 0;
-            //printf("Printing: <%s>\n",hp);
+            //printf("Printing: <%s>\n",hps);
             // read printing time if available
             FILE *fr = fopen("printting_times.dat","r");
             if(fr)
@@ -236,7 +241,7 @@ int decodeM4006(char *s)
                             char *he = strchr(hp,'\n');
                             if(he) *he=0;
                             unsigned long len = atol(hp);
-                            if(!strstr(res,hp))
+                            if(!strcmp(res,hps))
                             {
                                 // add 5 minutes (=300s) for warm up
                                 len += 300;
@@ -355,6 +360,7 @@ static char *sres;
     
     // search the end of the parameter, which is one char before the next letter or end of string
     char *hpe = hps;
+    int ovl=0;
     while(1)
     {
         if((*hpe >= 'A' && *hpe <= 'Z') || *hpe == 0)
@@ -366,6 +372,7 @@ static char *sres;
         }
         
         hpe++;
+        if(++ovl > 500) return NULL;
     }
     
     // hps is the start of the parameters, delimited by '/'
@@ -373,12 +380,14 @@ static char *sres;
     if(sres == NULL) return NULL;
     if(elemnum == 0) return sres;
     int e=1;
+    ovl = 0;
     while(sres != NULL) 
     {
         sres = strtok(NULL, "/");
         if(sres == NULL) return NULL;
         if(e == elemnum) return sres;
         e++;
+        if(++ovl > 500) return NULL;
     }
     return NULL;
 }
@@ -560,29 +569,36 @@ char s[1000];
         fprintf(fw,"%d\n",fan1rpm);
         fprintf(fw,"%d\n",fan2rpm);
         fprintf(fw,"%s\n",formatTime(printstat,0));
-        fprintf(fw,"%.2f\n",(double)printprogress/100);
+        
         
        
-        // remaining_time = (printstat[seconds printing time] - 180s[average warm up time])*100 / printprogress
-        // lines 19..21
-        if(printstat <= 300 || (printprogress/100) < 5)
+        // expected print time
+        if(totalPrinttime > 0)
         {
-            fprintf(fw,"wait for 5%%\n");
-            fprintf(fw,"...\n");
-            fprintf(fw,"...\n");
+            double progress;
+            progress = (double)printstat * 100.0 / (double)totalPrinttime;
+            
+            // progress in %
+            fprintf(fw,"%.2f\n",progress);
+            
+            // use precise calculation
+            printf("totalPrinttime:%ld\n",totalPrinttime);
+            fprintf(fw,"%s\n",formatTime(totalPrinttime,1));
+            
+            int remaining_time = totalPrinttime - printstat;
+            fprintf(fw,"%s\n",formatTime(remaining_time,1));
+            fprintf(fw,"%s\n",formatTime(remaining_time,2));
         }
         else
         {
-            // expected print time
-            if(totalPrinttime > 0)
+            // printprogress = progress in % * 100
+            fprintf(fw,"%.2f\n",(double)printprogress/100);
+            
+            if(printstat <= 300 || (printprogress/100) < 5)
             {
-                // use precise calculation
-                printf("totalPrinttime:%ld\n",totalPrinttime);
-                fprintf(fw,"%s\n",formatTime(totalPrinttime,1));
-                
-                int remaining_time = totalPrinttime - printstat;
-                fprintf(fw,"%s\n",formatTime(remaining_time,1));
-                fprintf(fw,"%s\n",formatTime(remaining_time,2));
+                fprintf(fw,"wait for 5%%\n");
+                fprintf(fw,"...\n");
+                fprintf(fw,"...\n");
             }
             else
             {
@@ -596,7 +612,6 @@ char s[1000];
                 fprintf(fw,"%s\n",formatTime(remaining_time,2));
             }
         }
-        
         
         // upload status
         // line 22-24

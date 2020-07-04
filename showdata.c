@@ -43,5 +43,5 @@ void show_data()
     }
     else
         printf("Print Time....... not printing\n");
-    printf("Progress......... %d %%\n",printprogress);
+    printf("gcode file progress.. %d %%\n",printprogress);
 }

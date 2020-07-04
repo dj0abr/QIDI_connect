@@ -117,9 +117,7 @@ static int waiting_time = 0;
     switch (loopstat)
     {        
         case 4000:  // idle loop: read status
-                    printf("send M4000\n");
                     sendToQidi("M4000");
-                    printf("M4000 sent\n");
                     loopstat = 40000;
                     timeout = 0;
                     break;
@@ -268,7 +266,6 @@ static int waiting_time = 0;
                         showperc(-2,0,1);
                         break;
                     }
-                    printf("5\n");
                     break;
                     
         case 30:     // delete file from SD card
