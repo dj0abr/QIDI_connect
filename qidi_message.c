@@ -35,7 +35,7 @@
         X,Y,Z:coordinate position, in mm
         F: Extrusion Head 1 fan PWM / extrusion Head 2 fan the maximum value is 256
         D: current read position in gcode file / total gcode file size / pause
-        T: printing time
+        T: actual printing time
  *
  * Show files on SD card
  * =====================
@@ -98,6 +98,7 @@ int nozzlenumber = 0;
 int hotbedenabled = 0;
 int noztemparr[TEMPARRLEN];
 int bedtemparr[TEMPARRLEN];
+unsigned long totalPrinttime = 0;
 
 int SDfileUpdate = 0;
 int delete_finished = 0;
@@ -198,6 +199,70 @@ int decodeM4001(char *s)
     return 1;
 }
 
+int decodeM4006(char *s)
+{
+    printf("Decode M4006\n");
+    if(s[0] == 'e')
+    {
+        printf("Qidi printer reports an error: %s\n",s);
+        return 0;
+    }
+    
+    char *hp = strchr(s,'\'');
+    if(hp)
+    {
+        hp++;
+        char *he = strchr(hp,'\'');
+        if(he)
+        {
+            *he = 0;
+            //printf("Printing: <%s>\n",hp);
+            // read printing time if available
+            FILE *fr = fopen("printting_times.dat","r");
+            if(fr)
+            {
+                while(1)
+                {
+                    char rs[512];
+                    char *res = fgets(rs, 511, fr);
+                    if(res)
+                    {
+                        char *hp;
+                        hp = strchr(res,':');
+                        if(hp)
+                        {
+                            *hp = 0;
+                            hp++;
+                            char *he = strchr(hp,'\n');
+                            if(he) *he=0;
+                            unsigned long len = atol(hp);
+                            if(!strstr(res,hp))
+                            {
+                                // add 5 minutes (=300s) for warm up
+                                len += 300;
+                                
+                                printf("printing %s with duration %ld s\n",res,len);
+                                totalPrinttime = len;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        printf("object not found in timing list\n");
+                        break;
+                    }
+                }
+                fclose(fr);
+            }
+        }
+        else
+            printf("cannot open printting_times.dat\n");
+    }
+
+    return 1;
+}
+
 #define MAXFILES 250
 #define FILENAMELEN 300
 
@@ -222,6 +287,9 @@ int decodeM20(char *s)
         // and write into file
         SDfileUpdate++;
         writeGUI();
+        
+        printf("Directory List completed\n");
+        
         return 2;
     }
     
@@ -460,8 +528,11 @@ void writeGUI()
 {
 FILE *fw;
 char s[1000];
-    
-    sprintf(s,"%s/phpdir/cgui.dat",htmldir);
+
+    snprintf(s,999,"%s/phpdir/cgui.dat",htmldir);
+    s[999]=0;
+    printf("write to %s\n",s);
+
     fw = fopen(s,"w");
     if(fw)
     {
@@ -473,6 +544,7 @@ char s[1000];
         fprintf(fw,"%d\n",machinesizeZ);
         fprintf(fw,"%d\n",nozzlenumber);
         fprintf(fw,"%s\n",hotbedenabled?"yes":"no");
+        
         
         // printer status information from command M4000
         // lines 6-18
@@ -490,6 +562,7 @@ char s[1000];
         fprintf(fw,"%s\n",formatTime(printstat,0));
         fprintf(fw,"%.2f\n",(double)printprogress/100);
         
+       
         // remaining_time = (printstat[seconds printing time] - 180s[average warm up time])*100 / printprogress
         // lines 19..21
         if(printstat <= 300 || (printprogress/100) < 5)
@@ -501,13 +574,29 @@ char s[1000];
         else
         {
             // expected print time
-            // give 180s = 3min for warm up
-            int total_printtime = ((printstat - 180) * 10000)/printprogress;  
-            int remaining_time = total_printtime - printstat;
-            fprintf(fw,"%s\n",formatTime(total_printtime,1));
-            fprintf(fw,"%s\n",formatTime(remaining_time,1));
-            fprintf(fw,"%s\n",formatTime(remaining_time,2));
+            if(totalPrinttime > 0)
+            {
+                // use precise calculation
+                printf("totalPrinttime:%ld\n",totalPrinttime);
+                fprintf(fw,"%s\n",formatTime(totalPrinttime,1));
+                
+                int remaining_time = totalPrinttime - printstat;
+                fprintf(fw,"%s\n",formatTime(remaining_time,1));
+                fprintf(fw,"%s\n",formatTime(remaining_time,2));
+            }
+            else
+            {
+                // duration unknown, use only calc depending of file position
+                // expected print time
+                // give 300s = 5min for warm up
+                int total_printtime = ((printstat - 300) * 10000)/printprogress;  
+                int remaining_time = total_printtime - printstat;
+                fprintf(fw,"%s\n",formatTime(total_printtime,1));
+                fprintf(fw,"%s\n",formatTime(remaining_time,1));
+                fprintf(fw,"%s\n",formatTime(remaining_time,2));
+            }
         }
+        
         
         // upload status
         // line 22-24
@@ -531,18 +620,22 @@ char s[1000];
             fprintf(fw,"%d ",noztemparr[i]);
         fprintf(fw,"\n");
         
+        
         // line 29: Array of bed temp values, space separated
         for(int i=0; i<TEMPARRLEN; i++)
             fprintf(fw,"%d ",bedtemparr[i]);
         fprintf(fw,"\n");
+        
         
         // SD card file list
         // line 30 until end of file
         for(int i=0; i<SDidx; i++)
             fprintf(fw,"%s\n",SDfiles[i]);
         
+        
         fclose(fw);
     }
     else
         printf("cannot open %s for writing\n",s);
+    
 }

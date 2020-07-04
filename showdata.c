@@ -18,7 +18,7 @@
 
 void show_data()
 {
-    printf("\n3D Printer Information\n");
+    /*printf("\n3D Printer Information\n");
     printf("----------------------\n");
     printf("machine type .... %s\n",machinetype?"delta":"cartesian");
     printf("bed size X ...... %d mm\n",bedsizeX);
@@ -26,16 +26,16 @@ void show_data()
     printf("size Z .......... %d mm\n",machinesizeZ);
     printf("number of nozzles %d\n",nozzlenumber);
     printf("hot bed enable... %s\n",hotbedenabled?"yes":"no");
-
+    */
     printf("\n3D Printer Status\n");
-    printf("-----------------\n");
+    //printf("-----------------\n");
     printf("bedtemp..........% 4d (setpoint % 4d)\n",bedtemp,bedtargettemp);
     printf("head1temp........% 4d (setpoint % 4d)\n",head1temp,head1targettemp);
     //printf("head2temp.......... %d -> %d\n",head2temp,head2targettemp); // for dual extruder machines only
-    printf("posX............. %7.3f mm\n",posX);
-    printf("posY............. %7.3f mm\n",posY);
-    printf("posZ............. %7.3f mm\n",posZ);
-    printf("fan1rpm.......... %d %%\n",fan1rpm);
+    //printf("posX............. %7.3f mm\n",posX);
+    //printf("posY............. %7.3f mm\n",posY);
+    //printf("posZ............. %7.3f mm\n",posZ);
+    //printf("fan1rpm.......... %d %%\n",fan1rpm);
     //printf("fan2rpm.......... %d %%\n",fan2rpm);
     if(printstat)
     {

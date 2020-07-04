@@ -106,3 +106,8 @@ then set a password in handler.php !!!!!!!
 Do not use the default password 1234 if the ports 
 are open for the public !!!!!!
 ```
+# credits
+this software uses a modified version of gcodestat written by 
+Bogdan Kecman "arhi"
+from the github repository:
+https://github.com/arhi/gcodestat

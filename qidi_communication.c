@@ -117,7 +117,9 @@ static int waiting_time = 0;
     switch (loopstat)
     {        
         case 4000:  // idle loop: read status
+                    printf("send M4000\n");
                     sendToQidi("M4000");
+                    printf("M4000 sent\n");
                     loopstat = 40000;
                     timeout = 0;
                     break;
@@ -126,6 +128,7 @@ static int waiting_time = 0;
                     s = readRXbuffer();
                     if(s) 
                     {
+                        printf("M4000 response: %s\n",s);
                         if(strstr(s,"Error:Wifi reboot,please reconnect!"))
                         {
                             // printer has been restarted, M4001 is required for re-connection
@@ -138,7 +141,10 @@ static int waiting_time = 0;
                     }
                     if(++timeout >= IDLE_TIME)
                     {
-                        loopstat = 4000;    // back to idle
+                        if(printprogress > 0 && waiting_time == 0)
+                            loopstat = 4006;    // read print file name
+                        else
+                            loopstat = 4000;    // back to idle
                         
                         // change status if printer does not respond
                         if(printer_online > 0)
@@ -178,6 +184,27 @@ static int waiting_time = 0;
                     if(++timeout >= CMD_TIMEOUT)
                         loopstat = 4001;    // repeat last command
                     break;
+
+        case 4006:  // read filename of currently printing object
+                    sendToQidi("M4006");
+                    loopstat = 40060;
+                    timeout = 0;
+                    break;
+                    
+        case 40060: // wait for response to M4006
+                    s = readRXbuffer();
+                    if(s)
+                    {
+                        res = decodeM4006(s);
+                        if(res) 
+                        {
+                            loopstat = 4000;
+                            break;
+                        }
+                    }
+                    if(++timeout >= CMD_TIMEOUT)
+                        loopstat = 4006;    // repeat last command
+                    break;
                     
         case 20:    // list files on SD card
                     sendToQidi("M20");
@@ -191,8 +218,10 @@ static int waiting_time = 0;
                     if(s)
                     {
                         res = decodeM20(s);
+                        
                         if(res == 2) 
                         {
+                            printf("M20 Decoder returned %d. Complete. Goto M4000\n",res);
                             loopstat = 4000;
                             break;
                         }
@@ -201,6 +230,7 @@ static int waiting_time = 0;
                     if(++timeout >= CMD_TIMEOUT)
                     {
                          //loopstat = 20;    // repeat last command (does not work, qidi unresponsive)
+                         printf("Timeout while waiting for M20 response: wake up QIDI. Goto M4000\n");
                          sendToQidi("M4000"); // wake up qidi in case the file list hangs
                          timeout = 0;
                          if(++giveup >= 5)
@@ -359,8 +389,13 @@ static int num_resends = 0;
 
     switch (writestatus)
     {
-        case 0: // open the file to upload
+        case 0: // complete filename for upload
                 sprintf(str,"%s/phpdir/%s",htmldir,uploadfilename);
+                
+                // calculate the expected printing time using gcodestat
+                get_processing_time(str,uploadfilename);
+                
+                // open the file to upload
                 fr = fopen(str,"r");
                 if(!fr)
                 {
