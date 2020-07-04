@@ -106,6 +106,15 @@ then set a password in handler.php !!!!!!!
 Do not use the default password 1234 if the ports 
 are open for the public !!!!!!
 ```
+# printing time calculation
+```json
+if the upload was done using this software, then the total printing time
+was calculated and stored in a file.
+The printing times shown on the screen are close to the real time.
+
+If the file was copied to the USB stick in another way, then the printing time is calculated
+by the file position which can be very unprecise.
+```
 # credits
 this software uses a modified version of gcodestat written by 
 Bogdan Kecman "arhi"
