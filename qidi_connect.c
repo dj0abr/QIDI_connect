@@ -21,6 +21,7 @@
 #include "qidi_connect.h"
 
 void *getkey(void *dummy);
+void test();
 
 int keeprunning = 1;
 int verbose = 0;
@@ -182,7 +183,7 @@ int opt;
 
     searchHTMLpath();// search Apache HTML folder
     init_udp();     // init communication UDP sockets
-    
+
     // start keyboard thread
     pthread_t keyThread;
 	pthread_create(&keyThread, NULL, getkey, NULL);

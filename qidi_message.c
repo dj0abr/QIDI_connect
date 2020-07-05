@@ -349,13 +349,26 @@ static char *sres;
     
     // search string for elem
     char *hps = strstr(s,elem);
-    if(hps == NULL) return NULL;
+    if(hps == NULL) 
+    {
+        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+        return NULL;
+    }
     // hps is now at the elem started
     // go to the start of the parameter, which is 1 char after the ':'
     hps = strchr(hps,':');
-    if(hps == NULL) return NULL;
+    if(hps == NULL)
+    {
+        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+        return NULL;
+    }
     hps++;
-    if(*hps == 0) return NULL;
+    if(*hps == 0)
+    {
+        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+        return NULL;
+    }
+
     // hps is now at the start of the parameter
     
     // search the end of the parameter, which is one char before the next letter or end of string
@@ -372,23 +385,40 @@ static char *sres;
         }
         
         hpe++;
-        if(++ovl > 500) return NULL;
+        if(++ovl > 500) 
+        {
+            printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+            return NULL;
+        }
     }
     
     // hps is the start of the parameters, delimited by '/'
     sres = strtok(hps,"/");
-    if(sres == NULL) return NULL;
+    if(sres == NULL) 
+    {
+        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+        return NULL;
+    }
     if(elemnum == 0) return sres;
     int e=1;
     ovl = 0;
     while(sres != NULL) 
     {
         sres = strtok(NULL, "/");
-        if(sres == NULL) return NULL;
+        if(sres == NULL) 
+        {
+            printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+            return NULL;
+        }
         if(e == elemnum) return sres;
         e++;
-        if(++ovl > 500) return NULL;
+        if(++ovl > 500) 
+        {
+            printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+            return NULL;
+        }
     }
+    printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
     return NULL;
 }
 
@@ -396,7 +426,11 @@ long getElement_int(char *s, char *elem, int elemnum)
 {
     char *sres = getElement_string(s,elem,elemnum);
     //printf("search %d of <%s> in <%s>, result <%s>\n",elemnum, elem,s,sres);
-    if(sres == NULL) return -9999;
+    if(sres == NULL) 
+    {
+        printf("element error:<%s><%s><%d>\n",s,elem,elemnum);
+        return -9999;
+    }
     return atol(sres);
 }
 
@@ -575,8 +609,9 @@ char s[1000];
         // expected print time
         if(totalPrinttime > 0)
         {
-            double progress;
-            progress = (double)printstat * 100.0 / (double)totalPrinttime;
+            // use precise measurement because gcode file was evaluated
+            if(printstat > totalPrinttime) totalPrinttime = printstat;
+            double progress = (double)printstat * 100.0 / (double)totalPrinttime;
             
             // progress in %
             fprintf(fw,"%.2f\n",progress);
@@ -591,12 +626,13 @@ char s[1000];
         }
         else
         {
+            // use simple measurement on file size and position
             // printprogress = progress in % * 100
             fprintf(fw,"%.2f\n",(double)printprogress/100);
             
             if(printstat <= 300 || (printprogress/100) < 5)
             {
-                fprintf(fw,"wait for 5%%\n");
+                fprintf(fw,"calculating ...\n");
                 fprintf(fw,"...\n");
                 fprintf(fw,"...\n");
             }
@@ -652,5 +688,4 @@ char s[1000];
     }
     else
         printf("cannot open %s for writing\n",s);
-    
 }

@@ -538,6 +538,7 @@ static int num_resends = 0;
                         // confirmed, file upload OK
                         printf("upload OK\n");
                         fclose(fr);
+                        writestatus = 6;    // ignore following requests
                         return 1;
                     }
                     timeout = 0;
