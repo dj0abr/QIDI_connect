@@ -126,7 +126,6 @@ static int waiting_time = 0;
                     s = readRXbuffer();
                     if(s) 
                     {
-                        printf("M4000 response: %s\n",s);
                         if(strstr(s,"Error:Wifi reboot,please reconnect!"))
                         {
                             // printer has been restarted, M4001 is required for re-connection

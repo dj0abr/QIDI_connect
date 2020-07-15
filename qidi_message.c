@@ -111,8 +111,6 @@ int decodeM4000(char *s)
         return 0;
     }
     
-    printf("Decode M4000\n");
-    
     bedtemp = getElement_int(s,"B:",0);
     if(bedtemp == -9999) return 0;
     
@@ -166,11 +164,8 @@ int decodeM4000(char *s)
     else
         printprogress = 0;
     
-    printf("Decode M4000 a\n");
     show_data();
-    printf("Decode M4000 b\n");
     writeGUI();
-    printf("Decode M4000 c\n");
     
     return 1;
 }
@@ -318,11 +313,11 @@ int decodeM20(char *s)
 }
 
 // remove SPCs from the string
-char *cleanString(char *sact)
+/*char *cleanString(char *sact)
 {
 static char s[RXBUFLEN];
 
-    //printf("original string:<%s>\n",sact);
+    printf("original string:<%s>\n",sact);
     
     // make a copy of the original string, so we do not corrupt the original
     int dst=0;
@@ -330,95 +325,124 @@ static char s[RXBUFLEN];
     {
         if(sact[src] != ' ' && sact[src] != '\n' && sact[src] != '\r')
         {
+            if(dst >= RXBUFLEN)
+            {
+                printf("cleanString: string length error: is %d , max %d\n",dst,RXBUFLEN);
+                return NULL;
+            }
             s[dst++] = sact[src];
         }
     }
     s[dst] = 0;
     
-    //printf("cleaned string:<%s>\n",s);
+    printf("cleaned string:<%s>\n",s);
     return s;
+}*/
+
+// search for the end of a parameter
+// which is / or SPC or CRLF
+char *para_end(char *dp)
+{
+    char *end = strchr(dp,'/');
+    if(end == NULL) end = strchr(dp,' ');
+    if(end == NULL) end = strchr(dp,'\n');
+    if(end == NULL) end = strchr(dp,'\r');
+    if(end == NULL) 
+        return dp + strlen(dp); // set end pointer to 0 terminator of dp
+    
+    return end;
 }
 
 // extract substring from a string
 // ok. B:-50/0 E1:-52 / 0 E2: 76/0 X:0.000 Y:0.000 Z:0.000 F:0/0 D:0/0/0 T:0
+// sact ... source string
+// elem ... element to search for 
+// elemnum ... number of parameter i.e.: 0=first para 1=second para...
 char *getElement_string(char *sact, char *elem, int elemnum)
 {
-static char *sres;
-
-    char *s = cleanString(sact);
-    
-    // search string for elem
-    char *hps = strstr(s,elem);
-    if(hps == NULL) 
+    // check if valid length
+    if(strlen(sact) >= RXBUFLEN)
     {
-        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+        printf("getElement_string: sact too long, ignored: <%s><%s>[%d]\n",sact,elem,elemnum);
         return NULL;
-    }
-    // hps is now at the elem started
-    // go to the start of the parameter, which is 1 char after the ':'
-    hps = strchr(hps,':');
-    if(hps == NULL)
-    {
-        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
-        return NULL;
-    }
-    hps++;
-    if(*hps == 0)
-    {
-        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
-        return NULL;
-    }
-
-    // hps is now at the start of the parameter
-    
-    // search the end of the parameter, which is one char before the next letter or end of string
-    char *hpe = hps;
-    int ovl=0;
-    while(1)
-    {
-        if((*hpe >= 'A' && *hpe <= 'Z') || *hpe == 0)
-        {
-            // end found
-            *hpe = 0;
-            // hpe is now on the last char of the parameter
-            break;
-        }
-        
-        hpe++;
-        if(++ovl > 500) 
-        {
-            printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
-            return NULL;
-        }
     }
     
-    // hps is the start of the parameters, delimited by '/'
-    sres = strtok(hps,"/");
-    if(sres == NULL) 
+    // make a copy of the original string
+    static char s[RXBUFLEN+1];
+    memcpy(s,sact,strlen(sact));
+    s[strlen(sact)] = 0;
+    
+    // search for the element
+    char *selem = strstr(s,elem);
+    if(selem == NULL)
     {
-        printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+        printf("getElement_string: element not found: <%s><%s>[%d]\n",sact,elem,elemnum);
         return NULL;
     }
-    if(elemnum == 0) return sres;
-    int e=1;
-    ovl = 0;
-    while(sres != NULL) 
+    
+    // search for the end of this element which
+    // is a SPC or CRLF
+    char *end = strchr(selem,' ');
+    if(end == NULL) end = strchr(selem,'\n');
+    if(end == NULL) end = strchr(selem,'\r');
+    if(end == NULL) 
     {
-        sres = strtok(NULL, "/");
-        if(sres == NULL) 
+        printf("getElement_string: element's end not found: <%s><%s>[%d]\n",sact,elem,elemnum);
+        return NULL;
+    }
+    
+    // terminate the element string
+    *end = 0;
+    
+    //printf("Element found:<%s>, search for parameter:%d\n",selem,elemnum);
+    
+    // goto the first parameter, which is after the ":"
+    char *dp = strchr(selem,':');
+    // no need to test, because the : must be there, already check with strstr(s,elem)
+    // the parameter starts with the next char
+    dp++;   // this is the start of the first parameter
+    // seach for the end of the parameter
+    char *dpend = para_end(dp);
+    if(dpend == NULL)
+    {
+        printf("getElement_string: invalid element end: <%s><%s>[%d]\n",sact,elem,elemnum);
+        return NULL;
+    }
+    if(elemnum == 0)
+    {
+        // we want the first parameter
+        *dpend = 0;
+        //printf("Parameter 0: <%s>\n",dp);
+        return dp;
+    }
+    
+    for(int paranum=1; paranum<=elemnum; paranum++)
+    {
+        // we need another parameter, go to the next element
+        dp = dpend+1;
+        //printf("search for parameter %d in <%s>\n",paranum,dp);
+        if(*dp == 0) 
         {
-            printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+            printf("string ends before parameter was found: <%s><%s>[%d]\n",sact,elem,elemnum);
+            return NULL;   // string ends
+        }
+        // seach for the end of the parameter
+        dpend = para_end(dp);
+        if(dpend == NULL)
+        {
+            printf("getElement_string: invalid element end: <%s><%s>[%d]\n",sact,elem,elemnum);
             return NULL;
         }
-        if(e == elemnum) return sres;
-        e++;
-        if(++ovl > 500) 
+        if(elemnum == paranum)
         {
-            printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
-            return NULL;
+            // we want the first parameter
+            *dpend = 0;
+            //printf("Parameter %d: <%s>\n",paranum,dp);
+            return dp;
         }
     }
-    printf("element error:<%s><%s><%d>\n",sact,elem,elemnum);
+    
+    printf("getElement_string: nothing found: <%s><%s>[%d]\n",sact,elem,elemnum);
     return NULL;
 }
 
@@ -431,15 +455,19 @@ long getElement_int(char *s, char *elem, int elemnum)
         printf("element error:<%s><%s><%d>\n",s,elem,elemnum);
         return -9999;
     }
-    return atol(sres);
+    return strtol(sres,NULL,10);
 }
 
 double getElement_float(char *s, char *elem, int elemnum)
 {
     char *sres = getElement_string(s,elem,elemnum);
     //printf("search %d of <%s> in <%s>, result <%s>\n",elemnum, elem,s,sres);
-    if(sres == NULL) return -9999;
-    return atof(sres);
+    if(sres == NULL) 
+    {
+        printf("element error:<%s><%s><%d>\n",s,elem,elemnum);
+        return -9999;
+    }
+    return strtof(sres,NULL);
 }
 
 // upload status variables
@@ -574,7 +602,6 @@ char s[1000];
 
     snprintf(s,999,"%s/phpdir/cgui.dat",htmldir);
     s[999]=0;
-    printf("write to %s\n",s);
 
     fw = fopen(s,"w");
     if(fw)
